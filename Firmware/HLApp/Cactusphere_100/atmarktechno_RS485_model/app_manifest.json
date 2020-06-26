@@ -1,0 +1,18 @@
+{
+  "SchemaVersion": 1,
+  "Name": "RS485_HLApp_Cactusphere_100",
+  "ComponentId": "73a00975-bf37-4d5c-ab91-8a65fe72a49e",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [  ],
+  "Capabilities": {
+    "AllowedConnections": [
+      "global.azure-devices-provisioning.net"
+    ],
+    "Gpio": [ "$MT3620_GPIO8" ],
+    "I2cMaster": [ "$MT3620_ISU1_I2C" ],
+    "DeviceAuthentication": "00000000-0000-0000-0000-000000000000",
+    "AllowedApplicationConnections": [ "c8b178fe-5942-4584-826c-51856ac5e4ff" ],
+    "NetworkConfig": true
+  },
+  "ApplicationType": "Default"
+}

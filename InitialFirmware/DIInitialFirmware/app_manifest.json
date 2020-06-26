@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "DIInitialFirmware",
+  "ComponentId": "82380401-e59d-4d9b-a3bd-c4dc20225763",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [  ],
+  "Capabilities": {
+    "Gpio": [ "$MT3620_GPIO0", "$MT3620_GPIO1", "$MT3620_GPIO2", "$MT3620_GPIO3", "$MT3620_GPIO8" ],
+    "I2cMaster": [ "$MT3620_ISU1_I2C" ]
+  },
+  "ApplicationType": "Default"
+}

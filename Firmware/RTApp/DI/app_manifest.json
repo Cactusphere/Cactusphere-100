@@ -1,0 +1,11 @@
+{
+  "SchemaVersion": 1,
+  "Name": "DI_RTApp_Cactusphere_100",
+  "ComponentId": "c01e5fe8-6c61-4d14-beff-38492b1502b6",
+  "EntryPoint": "/bin/app",
+  "Capabilities": {
+    "Gpio": [ 0, 1, 2, 3 ],
+    "AllowedApplicationConnections": [ "a7a778a1-9f0e-4c2c-866b-d9f42e8c00b0" ]
+  },
+  "ApplicationType": "RealTimeCapable"
+}

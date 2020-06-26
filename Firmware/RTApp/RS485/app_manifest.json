@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "RS485_RTApp_Cactusphere_100",
+  "ComponentId": "c8b178fe-5942-4584-826c-51856ac5e4ff",
+  "EntryPoint": "/bin/app",
+  "Capabilities": {
+    "Gpio": [ 37, 38 ],
+    "Uart": [ "ISU1" ],
+    "AllowedApplicationConnections": [ "73a00975-bf37-4d5c-ab91-8a65fe72a49e" ]
+  },
+  "ApplicationType": "RealTimeCapable"
+}
