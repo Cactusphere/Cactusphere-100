@@ -38,3 +38,5 @@ https://github.com/Cactusphere/Cactusphere-100/releases
 |:--|:--|
 |Visual Studio|HLApp/Cactusphere_100|
 |Visual Studio Code|HLApp/Cactusphere_100/atmarktechno_DI_model|
+
+※ どちらの開発環境でも、修正する app_manifest.json は HLApp/Cactusphere_100/atmarktechno_DI_model を使用してください。
