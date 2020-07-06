@@ -2,7 +2,9 @@
 
 このリポジトリには、Cactusphere-100シリーズ　ファームウェアのソースコードが含まれています。
 
-ビルド方法等、詳細についてはマニュアルを参照してください。
+ビルド方法等、詳細についてはソフトウェアマニュアルを参照してください。
+
+ソフトウェアマニュアルのダウンロードには、Armadilloサイトのユーザー登録とログインが必要になります。
 
 https://armadillo.atmark-techno.com/resources/documents/cactusphere/manuals
 
