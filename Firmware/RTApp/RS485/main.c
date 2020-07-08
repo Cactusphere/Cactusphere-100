@@ -63,7 +63,8 @@ extern uint32_t StackTop; // &StackTop == end of TCM
 
 static _Noreturn void DefaultExceptionHandler(void);
 
-static const uintptr_t UART_BASE = 0x38080500;
+// ISU3 UART Base Address
+static const uintptr_t UART_BASE = 0x380a0500;
 
 
 static
@@ -259,17 +260,17 @@ RTCoreMain(void)
     }
 
     // GPIO setting
-    static const GpioBlock isu2 = {
-    .baseAddr = 0x38090000,.type = GpioBlock_ISU,.firstPin = 36,.pinCount = 5 };
-    Mt3620_Gpio_AddBlock(&isu2);
+    static const GpioBlock grp5 = {
+    .baseAddr = 0x38060000,.type = GpioBlock_GRP,.firstPin = 20,.pinCount = 4 };
+    Mt3620_Gpio_AddBlock(&grp5);
 
     // setting up RS-485 receive mode
         // DE (disable)
-    Mt3620_Gpio_ConfigurePinForOutput(37);
-    Mt3620_Gpio_Write(37, false);
+    Mt3620_Gpio_ConfigurePinForOutput(21);
+    Mt3620_Gpio_Write(21, false);
         // RE_N (enable)
-    Mt3620_Gpio_ConfigurePinForOutput(38);
-    Mt3620_Gpio_Write(38, false);
+    Mt3620_Gpio_ConfigurePinForOutput(23);
+    Mt3620_Gpio_Write(23, false);
 
     // main loop
     for (;;) {
@@ -283,14 +284,14 @@ RTCoreMain(void)
                     Uart_DataSkip();  // read out unknown received data
 
                     // send request to the opposing device via RS-485
-                    Mt3620_Gpio_Write(37, true);  // DE (enable)
-                    Mt3620_Gpio_Write(38, true);  // RE_N (disable)
+                    Mt3620_Gpio_Write(21, true);  // DE (enable)
+                    Mt3620_Gpio_Write(23, true);  // RE_N (disable)
                     Uart_WritePoll((const char*)msg->body.writeAndReadReq.writeData,
                         msg->body.writeAndReadReq.writeLen);
 
                     // receive response from the opposing device
-                    Mt3620_Gpio_Write(37, false);
-                    Mt3620_Gpio_Write(38, false);
+                    Mt3620_Gpio_Write(21, false);
+                    Mt3620_Gpio_Write(23, false);
 
                     // send back the response to HLApp
                     if (! Uart_ReadPoll(rxBuffer, msg->body.writeAndReadReq.readLen)) {
