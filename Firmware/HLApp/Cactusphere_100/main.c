@@ -88,6 +88,7 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 #include "TelemetryItems.h"
 #include "PropertyItems.h"
 
+#include "cactusphere_product.h"
 #include "cactusphere_eeprom.h"
 #include "cactusphere_error.h"
 

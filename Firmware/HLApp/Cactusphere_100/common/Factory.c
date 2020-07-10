@@ -23,7 +23,7 @@
  */
 
 #include "Factory.h"
-#include "cactusphere_eeprom.h"
+#include "cactusphere_product.h"
 
 #if (APP_PRODUCT_ID == PRODUCT_ATMARK_TECHNO_DIN)
 #include "DI_DataFetchScheduler.h"
