@@ -40,6 +40,9 @@
 const char ModbusDevConfigKey[] = "ModbusDevConfig";
 const char BaudrateKey[] = "baudrate";
 
+#define MIN_BAUDRATE 1200
+#define MAX_BAUDRATE 125200
+
 static vector sModbusVec = NULL;
 
 // Add ModbusDev 
@@ -87,7 +90,7 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         int devId;
-        int baudrate;
+        int baudrate = 0;
         char *e;
         json_value* configItem = configJson->u.object.values[i].value;
 
@@ -110,8 +113,8 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
                 break;
             }
         }
-        if (baudrate == 0) {
-            return false;
+        if (baudrate < MIN_BAUDRATE || baudrate > MAX_BAUDRATE) {
+            continue;
         }
         Libmodbus_AddModbusDev(devId, baudrate);
     }
