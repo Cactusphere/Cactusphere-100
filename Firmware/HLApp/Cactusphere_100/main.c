@@ -108,6 +108,7 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 #ifdef USE_MODBUS
 #include "ModbusConfigMgr.h"
 #include "ModbusFetchConfig.h"
+#include "LibModbus.h"
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -490,8 +491,10 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             // RTApp
             char rtAppVersion[256] = { 0 };
             bool ret = false;
-#ifdef USE_DI
+#if defined USE_DI
             ret = DI_Lib_ReadRTAppVersion(rtAppVersion);
+#elif defined USE_MODBUS
+            ret = Libmodbus_GetRTAppVersion(rtAppVersion);
 #endif
             if (ret) {
                 snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate, "RTAppVersion", rtAppVersion);

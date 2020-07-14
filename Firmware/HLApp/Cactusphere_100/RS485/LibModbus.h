@@ -47,4 +47,7 @@ extern ModbusDev* Libmodbus_GetAndConnectLib(int devID);
 extern bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst);
 extern bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data);
 
+// Get RTApp Version
+extern bool Libmodbus_GetRTAppVersion(char* rtAppVersion);
+
 #endif  // _LIBMODBUS_H_
