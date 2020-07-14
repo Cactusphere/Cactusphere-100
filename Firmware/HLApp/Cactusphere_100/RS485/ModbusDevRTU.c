@@ -263,3 +263,24 @@ ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short valu
     }
     return rc;
 }
+
+// Get RTApp Version
+bool
+ModbusDevRTU_GetRTAppVersion(char* rtAppVersion) {
+    unsigned char sendMessage[256];
+    unsigned char readMessage[272];
+    UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
+    UART_ReturnMsg* retMsg = (UART_ReturnMsg*)readMessage;
+    int msgSize;
+    bool ret = false;
+
+    memset(msg, 0, sizeof(UART_DriverMsg));
+    msg->header.requestCode = UART_REQ_VERSION;
+    msg->header.messageLen = 0;
+    msgSize = (int)(sizeof(msg->header) + msg->header.messageLen);
+    ret = SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, msgSize,
+        (unsigned char*)retMsg, sizeof(UART_ReturnMsg));
+    strncpy(rtAppVersion, retMsg->message.version, retMsg->messageLen);
+
+    return ret;
+}

@@ -42,6 +42,9 @@
 
 const int TIMEOUT = 400; // 400[ms]
 
+#define OK  1
+#define NG  -1
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -278,6 +281,8 @@ RTCoreMain(void)
         const UART_DriverMsg* msg = InterCoreComm_WaitAndRecvRequest();
 
         if (msg != NULL) {
+            UART_ReturnMsg    retMsg;
+
             switch (msg->header.requestCode) {
             case UART_REQ_WRITE_AND_READ:
                 if (initializeUart) {
@@ -317,6 +322,15 @@ RTCoreMain(void)
                 initializeUart = true;
                 if (! InterCoreComm_SendIntValue(1)) {
 //                    int i = 0;
+                }
+                break;
+            case UART_REQ_VERSION:
+                memset(retMsg.message.version, 0x00, sizeof(retMsg.message.version));
+                strncpy(retMsg.message.version, RTAPP_VERSION, strlen(RTAPP_VERSION) + 1);
+                retMsg.returnCode = OK;
+                retMsg.messageLen = strlen(RTAPP_VERSION);
+                if (InterCoreComm_SendReadData((uint8_t*)&retMsg, sizeof(UART_ReturnMsg))) {
+                    ;
                 }
                 break;
             default:

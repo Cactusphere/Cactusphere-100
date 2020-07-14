@@ -139,3 +139,8 @@ bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
 bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data) {
     return ModbusDev_WriteSingleRegister(me, regAddr, *data);
 }
+
+// Get RTApp Version
+bool Libmodbus_GetRTAppVersion(char* rtAppVersion) {
+    return ModbusDev_GetRTAppVersion(rtAppVersion);
+}
