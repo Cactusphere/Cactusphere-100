@@ -4,7 +4,7 @@
   "configurations": [
     {
       "type": "azurespheredbg",
-      "name": "GDB Debugger (HLCore)",
+      "name": "GDB (AtmarkTechno_DI)",
       "project": "CMakeLists.txt",
       "inheritEnvironments": [
         "AzureSphere"
@@ -16,6 +16,21 @@
       "targetCore": "HLCore",
       "targetApiSet": "${env.AzureSphereTargetApiSet}",
       "partnerComponents": [ "c01e5fe8-6c61-4d14-beff-38492b1502b6" ]
+    },
+    {
+      "type": "azurespheredbg",
+      "name": "GDB (AtmarkTechno_RS485)",
+      "project": "CMakeLists.txt",
+      "inheritEnvironments": [
+        "AzureSphere"
+      ],
+      "customLauncher": "AzureSphereLaunchOptions",
+      "workingDirectory": "${workspaceRoot}",
+      "applicationPath": "${debugInfo.target}",
+      "imagePath": "${debugInfo.targetImage}",
+      "targetCore": "HLCore",
+      "targetApiSet": "${env.AzureSphereTargetApiSet}",
+      "partnerComponents": [ "c8b178fe-5942-4584-826c-51856ac5e4ff" ]
     }
   ]
 }
