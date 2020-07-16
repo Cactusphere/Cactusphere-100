@@ -141,11 +141,11 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
 
         if (countObj) {
             countVal = (int)countObj->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, diCounterStr, true, (bool)countVal);
+            PropertyItems_AddItem(propertyItem, diCounterStr, TYPE_BOOL, (bool)countVal);
         }
         if (pollObj) {
             pollVal = (int)pollObj->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, diPollingStr, true, (bool)pollVal);
+            PropertyItems_AddItem(propertyItem, diPollingStr, TYPE_BOOL, (bool)pollVal);
         }
 
         if ((countVal == 1) && (pollVal == 1)) {
@@ -199,7 +199,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                 }
                 config[pinid].isPulseHigh = (bool)item->u.object.values[0].value->u.boolean;
             }
-            PropertyItems_AddItem(propertyItem, propertyName, true, (bool)item->u.object.values[0].value->u.boolean);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, (bool)item->u.object.values[0].value->u.boolean);
         } else if (0 == strncmp(propertyName, CntIntervalDIKey, cntIntervalDiLen)) {
             pinid = strtol(&propertyName[cntIntervalDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -220,7 +220,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                     overWrite[pinid] = false;
                 }
             }
-            PropertyItems_AddItem(propertyItem, propertyName, false, value);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_NUM, value);
         } else if (0 == strncmp(propertyName, CntMinPulseWidthDIKey, cntMinPulseWidthDiLen)) {
             pinid = strtol(&propertyName[cntMinPulseWidthDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -241,7 +241,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                     overWrite[pinid] = false;
                 }
             }
-            PropertyItems_AddItem(propertyItem, propertyName, false, value);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_NUM, value);
         } else if (0 == strncmp(propertyName, CntMaxPulseCountDIKey, cntMaxPulseCountDiLen)) {
             pinid = strtol(&propertyName[cntMaxPulseCountDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -262,7 +262,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                     overWrite[pinid] = false;
                 }
             }
-            PropertyItems_AddItem(propertyItem, propertyName, false, value);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_NUM, value);
         } else if (0 == strncmp(propertyName, PollIntervalDIKey, pollIntervalDiLen)) {
             pinid = strtol(&propertyName[pollIntervalDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -282,7 +282,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                     overWrite[pinid] = false;
                 }
             }
-            PropertyItems_AddItem(propertyItem, propertyName, false, value);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_NUM, value);
         }
     }
 
