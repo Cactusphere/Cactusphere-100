@@ -34,6 +34,7 @@
 #include "json.h"
 #include "LibModbus.h"
 #include "ModbusFetchConfig.h"
+#include "PropertyItems.h"
 
 typedef struct ModbusConfigMgr {
     ModbusFetchConfig* fetchConfig;
@@ -59,7 +60,7 @@ ModbusConfigMgr_Cleanup(void)
 // Apply new configuration
 void
 ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
-    unsigned int payloadSize)
+    unsigned int payloadSize, vector item)
 {
     json_value* jsonObj = json_parse(payload, payloadSize);
     json_value* desiredObj = NULL;
@@ -69,7 +70,6 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     desiredObj = json_GetKeyJson("desired", jsonObj);
 
     if (desiredObj == NULL) {
-        Log_Debug("DeviceTemplate not exists desired.\n");
         modbusConfObj = json_GetKeyJson("ModbusDevConfig", jsonObj);
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", jsonObj);
     } else {
@@ -79,6 +79,7 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
 
     if (modbusConfObj != NULL) {
         modbusConfObj = json_GetKeyJson("value", modbusConfObj);
+        PropertyItems_AddItem(item, "ModbusDevConfig", TYPE_STR, modbusConfObj->u.string.ptr);
         modbusConfObj = json_parse(modbusConfObj->u.string.ptr, modbusConfObj->u.string.length);
         if (modbusConfObj != NULL) {
             Libmodbus_ModbusDevClear();
@@ -93,13 +94,14 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
 
     if (telemetryConfObj != NULL) {
         telemetryConfObj = json_GetKeyJson("value", telemetryConfObj);
+        PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_STR, telemetryConfObj->u.string.ptr);
         telemetryConfObj = json_parse(telemetryConfObj->u.string.ptr, telemetryConfObj->u.string.length);
         if (telemetryConfObj != NULL) {
             if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0")) {
                 Log_Debug("ModbusTelemetryConfig LoadToJsonError!\n");
             }
         } else {
-            Log_Debug("ModbusTelemetryConfig string error!\n");
+            Log_Debug("ModbusTelemetryConfig parse error!\n");
         }
     }
 }

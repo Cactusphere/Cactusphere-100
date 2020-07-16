@@ -34,23 +34,76 @@
 
 #include "PropertyItems.h"
 
+static char* PropertyItems_ReplaceString(char* beforeStr)
+{
+    char *pos = beforeStr;
+    char *afterStr = NULL;
+    size_t count = 0;
+    size_t len = 0;
+
+    for (int i = 0; *pos != '\0'; i++) {
+        if(*pos == '\"'){
+            count++;
+        }
+        pos++;
+    }
+
+    len = strlen(beforeStr) + count + 1;
+    afterStr = (char *)malloc(len);
+    if (!afterStr) {
+        return afterStr;
+    }
+    memset(afterStr, 0, len);
+
+    for (int i = 0, j = 0; beforeStr[i] != '\0'; i++, j++) {
+        if (beforeStr[i] == '\"') {
+            afterStr[j] = '\\';
+            j++;
+        }
+        afterStr[j] = beforeStr[i];
+    }
+
+    return afterStr;
+}
+
 void PropertyItems_AddItem(
-    vector item, const char* itemName, bool isbool, ...)
+    vector item, const char* itemName, PropertyType type, ...)
 {
     va_list	args;
+    char *value;
+
     ResponsePropertyItem pseudo;
-    pseudo.isbool = false;
+    pseudo.type = type;
     pseudo.value.b = false;
     pseudo.value.ul = 0x00;
-
-    va_start(args, isbool);
+    pseudo.value.str = NULL;
+    
+    va_start(args, type);
     strncpy(pseudo.propertyName, itemName, PROPERTY_NAME_MAX_LEN);
-    if (isbool) {
-        pseudo.isbool = isbool;
+    
+    switch (type)
+    {
+    case TYPE_BOOL:
         pseudo.value.b = (bool)va_arg(args, int);
-    } else {
+        break;
+    case TYPE_NUM:
         pseudo.value.ul = va_arg(args, uint32_t);
+        break;
+    case TYPE_STR:
+        if ((value = va_arg(args, char *)) == NULL) {
+            goto err;
+        }
+
+        if ((pseudo.value.str = PropertyItems_ReplaceString(value)) == NULL) {
+            goto err;
+        }
+
+        break;
+    default:
+        goto err;
     }
-    va_end(args);
+
     vector_add_last(item, &pseudo);
+err:
+    va_end(args);
 }
