@@ -53,4 +53,7 @@ extern bool ModbusDev_ReadSingleInputRegister(ModbusDev* me, int regAddr, unsign
 
 // Write 1byte
 extern bool ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value);
+
+// Get RTApp Version
+extern bool ModbusDev_GetRTAppVersion(char* rtAppVersion);
 #endif  // _MODBUS_DEV_H_

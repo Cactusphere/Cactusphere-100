@@ -107,3 +107,9 @@ bool
 ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value) {
     return ModbusDevRTU_WriteSingleRegister(me->ctx, regAddr, value);
 }
+
+// Get RTApp Version
+bool
+ModbusDev_GetRTAppVersion(char* rtAppVersion) {
+    return ModbusDevRTU_GetRTAppVersion(rtAppVersion);
+}

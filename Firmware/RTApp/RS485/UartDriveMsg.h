@@ -36,6 +36,7 @@
 enum {
     UART_REQ_WRITE_AND_READ = 1,  // send request and receive response aganist opposing device
     UART_REQ_SET_PARAMS     = 2,  // setting UART parameters
+    UART_REQ_VERSION        = 255,// RTApp Version
 };
 
 //
@@ -74,6 +75,15 @@ typedef struct UART_DriverMsg {
         UART_MsgSetParams       setParams;
     } body;
 } UART_DriverMsg;
+
+// response message
+typedef struct UART_ReturnMsg {
+    uint32_t    returnCode;
+    uint32_t    messageLen;
+    union {
+        char    version[256];
+    } message;
+} UART_ReturnMsg;
 
 // macro for UART_REQ_WRITE_AND_READ
 #define UART_MsgWriteAndRead_WriteDataPtr(msgBody) \
