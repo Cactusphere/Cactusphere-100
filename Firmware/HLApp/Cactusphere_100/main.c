@@ -607,6 +607,64 @@ static void SetupAzureClient(void)
 }
 
 /// <summary>
+///    Send property response.
+/// </summary>
+#define JSON_FORMAT_NUM 50
+static void SendPropertyResponse(vector Send_PropertyItem)
+{
+    static const char* EventMsgTemplate_bool = "{ \"%s\": %s }";
+    static const char* EventMsgTemplate_num  = "{ \"%s\": %u }";
+    static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
+    char* propertyStr = NULL;
+    size_t propertyStr_len = 0;
+    
+    if (! vector_is_empty(Send_PropertyItem)) {
+        ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
+        for (int i = 0; i < vector_size(Send_PropertyItem); i++){
+            switch (curs->type)
+            {
+            case TYPE_BOOL:
+                propertyStr_len = strlen(curs->propertyName) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if (propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, propertyStr_len, EventMsgTemplate_bool,
+                             curs->propertyName, (curs->value.b ? "true" : "false"));
+                }
+                break;
+            case TYPE_NUM:
+                propertyStr_len = strlen(curs->propertyName) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if (propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, propertyStr_len, EventMsgTemplate_num,
+                             curs->propertyName, curs->value.ul);
+                }
+                break;
+            case TYPE_STR:
+                propertyStr_len = strlen(curs->propertyName) + strlen(curs->value.str) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if(propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, strlen(curs->propertyName)+strlen(curs->value.str) + JSON_FORMAT_NUM, EventMsgTemplate_str,
+                             curs->propertyName, curs->value.str);
+                }
+                free(curs->value.str);
+                break;
+            default:
+                continue;
+            }
+            if (propertyStr) {
+                IoT_CentralLib_SendProperty(propertyStr);
+                free(propertyStr);
+                propertyStr = NULL;
+            }
+            curs++;
+        }
+    }
+}
+
+/// <summary>
 ///     Callback invoked when a Device Twin update is received from IoT Hub.
 ///     Updates local state for 'showEvents' (bool).
 /// </summary>
@@ -619,11 +677,14 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         return;
     }
 
+    vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
+
 #ifdef USE_MODBUS
-    ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize);
+    ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
     DataFetchScheduler_Init(
         mTelemetrySchedulerArr[MODBUS_RTU],
         ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
+    SendPropertyResponse(Send_PropertyItem);
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -634,8 +695,6 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 #endif // USE_MODBUS_TCP
 
 #ifdef USE_DI
-    vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
-
     SphereWarning err = DI_ConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
     switch (err)
     {
@@ -645,22 +704,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
             mTelemetrySchedulerArr[DIGITAL_IN],
             DI_FetchConfig_GetFetchItemPtrs(DI_ConfigMgr_GetFetchConfig()),
             DI_WatchConfig_GetFetchItems(DI_ConfigMgr_GetWatchConfig()));
-
-        static const char* EventMsgTemplate_b = "{ \"%s\": %s }";
-        static const char* EventMsgTemplate_d = "{ \"%s\": %u }";
-        static char propertyStr[100] = { 0 };
-        if (! vector_is_empty(Send_PropertyItem)) {
-            ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
-            for (int i = 0; i < vector_size(Send_PropertyItem); i++){
-                if (curs->isbool) {
-                    snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate_b, curs->propertyName, (curs->value.b ? "true" : "false"));
-                } else {
-                    snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate_d, curs->propertyName, curs->value.ul);
-                }
-                IoT_CentralLib_SendProperty(propertyStr);
-                curs++;
-            }
-        }
+        SendPropertyResponse(Send_PropertyItem);
 
         if (err == NO_ERROR) {
             gLedState = LED_ON;
@@ -692,8 +736,8 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         exitCode = ExitCode_TermHandler_SigTerm;
     }
 
-    vector_destroy(Send_PropertyItem);
 #endif  // USE_DI
+    vector_destroy(Send_PropertyItem);
 }
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,

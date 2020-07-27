@@ -35,7 +35,7 @@ extern void	ModbusConfigMgr_Cleanup(void);
 
 // Apply new configuration
 extern void	ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
-    unsigned int payloadSize);
+    unsigned int payloadSize, vector item);
 
 // Get configuratioin
 extern ModbusFetchConfig*

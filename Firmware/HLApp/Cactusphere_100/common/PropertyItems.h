@@ -31,16 +31,24 @@
 
 #define PROPERTY_NAME_MAX_LEN	32
 
+typedef enum {
+    TYPE_NONE,
+    TYPE_STR,
+    TYPE_NUM,
+    TYPE_BOOL,
+} PropertyType;
+
 typedef struct ResponsePropertyItem {
     char        propertyName[PROPERTY_NAME_MAX_LEN + 1];  // property name
-    bool        isbool;
+    PropertyType type;
     union {
         uint32_t ul;
         bool     b;
+        char*    str;
     } value;
 } ResponsePropertyItem;
 
 extern void PropertyItems_AddItem(
-    vector item, const char* itemName, bool isbool, ...);
+    vector item, const char* itemName, PropertyType type, ...);
 
 #endif  // _PROPERTYITEMS_H_
