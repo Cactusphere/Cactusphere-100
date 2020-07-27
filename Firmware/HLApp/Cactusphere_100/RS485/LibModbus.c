@@ -38,7 +38,10 @@
 #include "vector.h"
 
 const char ModbusDevConfigKey[] = "ModbusDevConfig";
-const char BoudrateKey[] = "boudrate";
+const char BaudrateKey[] = "baudrate";
+
+#define MIN_BAUDRATE 1200
+#define MAX_BAUDRATE 125200
 
 static vector sModbusVec = NULL;
 
@@ -87,7 +90,7 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         int devId;
-        int boudrate;
+        int baudrate = 0;
         char *e;
         json_value* configItem = configJson->u.object.values[i].value;
 
@@ -98,22 +101,22 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
         }
 
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
-            if (0 == strcmp(configItem->u.object.values[p].name, BoudrateKey)) {
+            if (0 == strcmp(configItem->u.object.values[p].name, BaudrateKey)) {
                 json_value* item = configItem->u.object.values[p].value;
 
                 if (item->type == json_integer) {
-                    boudrate = (int)item->u.integer;
+                    baudrate = (int)item->u.integer;
                 }
                 else if (item->type == json_string) {
-                    boudrate = strtol(item->u.string.ptr, &e, 16);
+                    baudrate = strtol(item->u.string.ptr, &e, 16);
                 }
                 break;
             }
         }
-        if (boudrate == 0) {
-            return false;
+        if (baudrate < MIN_BAUDRATE || baudrate > MAX_BAUDRATE) {
+            continue;
         }
-        Libmodbus_AddModbusDev(devId, boudrate);
+        Libmodbus_AddModbusDev(devId, baudrate);
     }
 
     return true;
