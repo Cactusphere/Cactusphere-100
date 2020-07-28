@@ -1,0 +1,129 @@
+name: ci-build-di
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+  build:
+    env:
+      CMAKE_DIR: build
+      RELEASE_DIR: "release"
+      RELEASE_HL_DIR: "HLApp/bin"
+      RELEASE_RT_DIR: "RTApp/bin"
+      RELEASE_INIT_DIR: "InitFW"
+      RELEASE_HW_DIR: "HW"
+      ARM_TOOLCHAIN_URL: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2"
+      ARV: "5+Beta2004"
+      ARV_INIT: "5"
+      BUILD_TYPE: "Debug"
+      HL_PROJECT_DIR: "Firmware/HLApp/Cactusphere_100/atmarktechno_DI_model"
+      RT_PROJECT_DIR: "Firmware/RTApp/DI"
+      INIT_PROJECT_DIR: "InitialFirmware/DIInitialFirmware"
+      HWDEF_DIR: "Firmware/HLApp/Cactusphere_100/Hardware/mt3620"
+      HL_ELF: "HLApp_Cactusphere_100.out"
+      RT_ELF: "DI_RTApp.out"
+      INIT_ELF: "DIInitialFirmware.imagepackage"
+      HWDEF: "mt3620.json"
+      APP_VERSION: "v1.0.0"
+      MODEL_NAME: "DI"
+      SERIES_NAME: "cactusphere_100"
+      INFO_FILE: "hash.txt"
+
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: tools
+      run: |
+        pip3 install end
+        python3 --version
+        sudo apt-get install -y net-tools curl ninja-build tree
+
+    - name: install-sdk
+      run: |
+        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install.sh
+        chmod +x install.sh
+        yes Y | sudo ./install.sh
+
+    - name: install-arm-rt-toolchain
+      run: |
+        wget -nv ${ARM_TOOLCHAIN_URL} -O tc.tar.bz2
+        tar xf tc.tar.bz2 --strip-components=1
+
+    - name: build-hlapp
+      run: |
+        cd ${HL_PROJECT_DIR}
+        mkdir ${CMAKE_DIR}
+        cd ${CMAKE_DIR}
+        cmake -G "Ninja" -DCMAKE_TOOLCHAIN_FILE="/opt/azurespheresdk/CMakeFiles/AzureSphereToolchain.cmake" -DAZURE_SPHERE_TARGET_API_SET=${ARV} --no-warn-unused-cli -DAPP_VERSION=${APP_VERSION} -DPRODUCT=${PRODUCT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_MAKE_PROGRAM="ninja" ../..
+        ninja
+      env:
+        PROJECT: "HLApp_Cactusphere_100"
+        PRODUCT: "atmarktechno_DI_model"
+
+    - name: build-rtapp
+      run: |
+        pwd
+        cd ${RT_PROJECT_DIR}
+        mkdir ${CMAKE_DIR}
+        cd ${CMAKE_DIR}
+        cmake -G "Ninja" -DCMAKE_TOOLCHAIN_FILE="/opt/azurespheresdk/CMakeFiles/AzureSphereRTCoreToolchain.cmake" -DAZURE_SPHERE_TARGET_API_SET=${ARV} -DARM_GNU_PATH="${GITHUB_WORKSPACE}" --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_MAKE_PROGRAM="ninja" ..
+        ninja
+        ls
+      env:
+        PROJECT: "DI_RTApp"
+
+    - name: build-initfw
+      run: |
+        cd ${INIT_PROJECT_DIR}
+        mkdir ${CMAKE_DIR}
+        cd ${CMAKE_DIR}
+        cmake -G "Ninja" -DCMAKE_TOOLCHAIN_FILE="/opt/azurespheresdk/CMakeFiles/AzureSphereToolchain.cmake" -DAZURE_SPHERE_TARGET_API_SET=${ARV_INIT} --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_MAKE_PROGRAM="ninja" ..
+        ninja
+      env:
+        PROJECT: "DIInitialFirmware"
+
+    - name: collect-files
+      run: |
+        mkdir ${GITHUB_WORKSPACE}/${RELEASE_DIR} -p
+        mkdir ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_HL_DIR} -p
+        mkdir ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_RT_DIR} -p
+        mkdir ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_INIT_DIR} -p
+        mkdir ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_HW_DIR} -p
+        cp ${GITHUB_WORKSPACE}/${HL_PROJECT_DIR}/${CMAKE_DIR}/${HL_ELF} ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_HL_DIR}/app
+        cp ${GITHUB_WORKSPACE}/${HL_PROJECT_DIR}/app_manifest.json ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_HL_DIR}/../
+        cp ${GITHUB_WORKSPACE}/${RT_PROJECT_DIR}/${CMAKE_DIR}/${RT_ELF} ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_RT_DIR}/app
+        cp ${GITHUB_WORKSPACE}/${RT_PROJECT_DIR}/app_manifest.json ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_RT_DIR}/../
+        cp ${GITHUB_WORKSPACE}/${HWDEF_DIR}/${HWDEF} ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_HW_DIR}
+        cp ${GITHUB_WORKSPACE}/${INIT_PROJECT_DIR}/${CMAKE_DIR}/${INIT_ELF} ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${RELEASE_INIT_DIR}
+        tree ${GITHUB_WORKSPACE}/${RELEASE_DIR}
+
+    - name: extract_info
+      run: |
+        echo Date: > ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        date >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo Hashes: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        find ${GITHUB_WORKSPACE}/${RELEASE_DIR} -type f -print0 | sort -z | xargs -0 sha256sum >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_WORKFLOW: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_WORKFLOW} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_RUN_ID: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_RUN_ID} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_RUN_NUMBER: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_RUN_NUMBER} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_ACTION: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_ACTION} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_REPOSITORY: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_REPOSITORY} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_SHA: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_SHA} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo GITHUB_REF: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo ${GITHUB_REF} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+
+    - name: upload-package
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.SERIES_NAME }}_${{ env.MODEL_NAME }}_${{ env.APP_VERSION }}_${{ github.sha }}
+        path: ${{ env.RELEASE_DIR }}
+
