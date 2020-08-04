@@ -23,8 +23,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(HLApp_Cactusphere_100 C)
 
-azsphere_configure_tools(TOOLS_REVISION "20.04")
-azsphere_configure_api(TARGET_API_SET "5+Beta2004")
+azsphere_configure_tools(TOOLS_REVISION "20.07")
+azsphere_configure_api(TARGET_API_SET "6")
 
 file(GLOB DRIVERS_SRC drivers/*.c)
 file(GLOB COMMON_SRC common/*.c)
@@ -32,7 +32,7 @@ file(GLOB COMMON_SRC common/*.c)
 # Default product
 if(NOT PRODUCT)
     set(PRODUCT "atmarktechno_DI_model")
-    set(APP_VERSION "v1.0.0")
+    set(APP_VERSION "v1.0.1")
 endif()
 
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/app_manifest.json"
