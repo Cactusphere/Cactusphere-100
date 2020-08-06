@@ -487,7 +487,7 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate, "HLAppVersion", HLAPP_VERSION);
             IoT_CentralLib_SendProperty(propertyStr);
             // RTApp
-            char rtAppVersion[256];
+            char rtAppVersion[256] = { 0 };
             bool ret = false;
 #ifdef USE_DI
             ret = DI_Lib_ReadRTAppVersion(rtAppVersion);
