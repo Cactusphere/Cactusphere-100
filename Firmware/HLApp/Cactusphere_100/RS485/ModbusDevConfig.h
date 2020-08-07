@@ -22,32 +22,12 @@
  * THE SOFTWARE.
  */
 
-#ifndef _LIBMODBUS_H_
-#define _LIBMODBUS_H_
+#ifndef _MODBUS_DEV_CONFIG_H_
+#define _MODBUS_DEV_CONFIG_H_
 
-#include <stdbool.h>
+// Allowed function code
+#define FC_READ_HOLDING_REGISTER 0x03
+#define FC_READ_INPUT_REGISTERS 0x04
+#define FC_WRITE_SINGLE_REGISTER 0x06
 
-#include "ModbusDev.h"
-#include "json.h"
-
-// Initialization and destroy
-extern void Libmodbus_ModbusDevInitialize(void);
-extern void Libmodbus_ModbusDevDestroy(void);
-
-// Clear
-extern void Libmodbus_ModbusDevClear(void);
-
-// Regist
-extern bool Libmodbus_LoadFromJSON(const json_value* json);
-
-// Connect
-extern ModbusDev* Libmodbus_GetAndConnectLib(int devID);
-
-// Read/Write register
-extern bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount);
-extern bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data);
-
-// Get RTApp Version
-extern bool Libmodbus_GetRTAppVersion(char* rtAppVersion);
-
-#endif  // _LIBMODBUS_H_
+#endif  // _MODBUS_DEV_CONFIG_H_

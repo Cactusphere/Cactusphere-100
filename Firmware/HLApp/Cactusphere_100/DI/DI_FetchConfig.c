@@ -208,7 +208,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
 
             uint32_t value;
             int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value);
+            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {
@@ -229,7 +229,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
 
             uint32_t value;
             int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value);
+            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 1000) {
                     if (config[pinid].minPulseWidth != value) {
@@ -250,7 +250,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
 
             uint32_t value;
             int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value);
+            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 0x7FFFFFFF) {
                     if (config[pinid].maxPulseCount != value) {
@@ -270,7 +270,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             }
             uint32_t value;
             int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value);
+            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
             if (!config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {

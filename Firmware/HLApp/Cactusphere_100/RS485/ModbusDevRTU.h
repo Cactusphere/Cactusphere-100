@@ -36,11 +36,8 @@ extern void ModbusDevRTU_Destroy(ModbusCtx* me);
 // Connect
 extern bool ModbusDevRTU_Connect(ModbusCtx* me);
 
-// Read 1byte holding register
-extern bool ModbusDevRTU_ReadSingleRegister(ModbusCtx* me, int regAddr, unsigned short* dst);
-
-// Read 1byte input register
-extern bool ModbusDevRTU_ReadSingleInputRegister(ModbusCtx* me, int regAddr, unsigned short* dst);
+// Read status/register
+extern bool ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length);
 
 // Write 1byte
 extern bool ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short value);

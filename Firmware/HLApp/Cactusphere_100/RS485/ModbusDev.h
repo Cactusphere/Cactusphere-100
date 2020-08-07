@@ -45,11 +45,8 @@ extern ModbusDev* ModbusDev_GetModbusDev(int devID, vector modbusDevVec);
 // Connect
 extern bool ModbusDev_Connect(ModbusDev* me);
 
-// Read 1byte holding register 
-extern bool ModbusDev_ReadSingleRegister(ModbusDev* me, int regAddr, unsigned short* dst);
-
-// Read 1byte input register
-extern bool ModbusDev_ReadSingleInputRegister(ModbusDev* me, int regAddr, unsigned short* dst);
+// Read status/register
+extern bool ModbusDev_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount);
 
 // Write 1byte
 extern bool ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value);

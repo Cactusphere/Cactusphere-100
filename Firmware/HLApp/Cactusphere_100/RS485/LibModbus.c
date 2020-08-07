@@ -103,13 +103,12 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
             if (0 == strcmp(configItem->u.object.values[p].name, BaudrateKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                if (item->type == json_integer) {
-                    baudrate = (int)item->u.integer;
+                if (json_GetNumericValue(item, &value, 16)) {
+                    baudrate = (int)value;
                 }
-                else if (item->type == json_string) {
-                    baudrate = strtol(item->u.string.ptr, &e, 16);
-                }
+
                 break;
             }
         }
@@ -136,8 +135,8 @@ ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
     return modbusDevP;
 }
 
-bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
-    return ModbusDev_ReadSingleRegister(me, regAddr, dst);
+bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount) {
+    return ModbusDev_ReadRegister(me, regAddr, funcCode, dst, regCount);
 }
 bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data) {
     return ModbusDev_WriteSingleRegister(me, regAddr, *data);

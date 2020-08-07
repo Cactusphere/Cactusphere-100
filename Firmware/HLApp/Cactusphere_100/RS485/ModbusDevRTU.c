@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "ModbusDevRTU.h"
+#include "ModbusDevConfig.h"
 #include "UartDriveMsg.h"
 #include "SendRTApp.h"
 #include "vector.h"
@@ -43,11 +44,6 @@
 #define MAX_MESSAGE_LENGTH 256
 
 #define MODBUS_RTU_PRESET_REQ_LENGTH 6
-
-// function
-#define FC_READ_HOLDING_REGISTER 0x03
-#define FC_READ_INPUT_REGISTERS 0x04
-#define FC_WRITE_SINGLE_REGISTER 0x06
 
 // ModbusCtx structure
 typedef struct ModbusCtx {
@@ -131,15 +127,15 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     return rc;
 }
 
-static bool
-ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst) {
+// Read register
+bool
+ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length) {
     int rc;
     int req_length;
     uint8_t req[MIN_REQ_LENGTH];
     uint8_t rsp[MAX_MESSAGE_LENGTH];
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
-    int length = 1;
 
     req_length = ModbusRTU_CreateRequestMsg(me, function, regAddr, length, req);
 
@@ -216,17 +212,6 @@ ModbusDevRTU_Connect(ModbusCtx* me) {
         return false;
     }
     return true;
-}
-
-// Read single register
-bool 
-ModbusDevRTU_ReadSingleRegister(ModbusCtx* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadRegister(me, regAddr, FC_READ_HOLDING_REGISTER, dst);
-}
-
-bool
-ModbusDevRTU_ReadSingleInputRegister(ModbusCtx* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadRegister(me, regAddr, FC_READ_INPUT_REGISTERS, dst);
 }
 
 // Write single register

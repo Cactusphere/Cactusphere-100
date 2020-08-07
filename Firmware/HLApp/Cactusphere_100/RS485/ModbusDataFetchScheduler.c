@@ -92,16 +92,22 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
 
             for (int j = 0, m = vector_size(fetchItems); j < m; ++j) {
                 const ModbusFetchItem* item = *fiCurs++;
-                unsigned short value;
+                unsigned short readVal[2] = { 0 };
 
-                if (!Libmodbus_ReadRegister(modbusdev, (int)item->regAddr, &value)) {
+                if (!Libmodbus_ReadRegister(modbusdev, (int)item->regAddr, (int)item->funcCode, readVal, (int)item->regCount)) {
                     // error!
                     continue;
                 }
 
-                if (item->asFloat)
-                {
-                    double fVal = value;
+                unsigned long tmpVal  = 0;
+                if (item->regCount == 2) {
+                    tmpVal = (unsigned long)((readVal[0] << 16) + readVal[1]);
+                } else {
+                    tmpVal = readVal[0];
+                }
+
+                if (item->asFloat) {
+                    double fVal = tmpVal;
 
                     fVal += item->offset;
                     if (item->multiplier != 0) {
@@ -111,10 +117,8 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
                         fVal /= item->devider;
                     }
                     StringBuf_AppendByPrintf(me->mStringBuf, "%f", fVal);
-                }
-                else
-                {
-                    unsigned long ulVal = value;
+                } else {
+                    unsigned long ulVal = tmpVal;
 
                     ulVal += item->offset;
                     if (item->multiplier != 0) {

@@ -29,6 +29,7 @@
 
 #include "json.h"
 #include "ModbusFetchItem.h"
+#include "ModbusDevConfig.h"
 #include "TelemetryItems.h"
 
 struct ModbusFetchConfig {
@@ -39,13 +40,15 @@ struct ModbusFetchConfig {
 
 // key Items
 const char ModbusTelemetryConfigKey[]   = "ModbusTelemetryConfig";
-const char DevIDKey[]                   = "devID";				
-const char RegisterAddrKey[]            = "registerAddr";	
-const char OffsetKey[]                  = "offset";				
-const char IntervalKey[]                = "interval";		
-const char MultiplylKey[]               = "multiply";			
-const char DeviderKey[]                 = "devider";			
-const char AsFloatKey[]                 = "asFloat";			
+const char DevIDKey[]                   = "devID";
+const char RegisterAddrKey[]            = "registerAddr";
+const char RegisterCountKey[]           = "registerCount";
+const char FuncCodeKey[]                = "funcCode";
+const char OffsetKey[]                  = "offset";
+const char IntervalKey[]                = "interval";
+const char MultiplylKey[]               = "multiply";
+const char DeviderKey[]                 = "devider";
+const char AsFloatKey[]                 = "asFloat";
 
 // Initialization and cleanup
 ModbusFetchConfig*
@@ -111,6 +114,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         ModbusFetchItem pseudo;
+        bool isAddList = true;
         json_value* configItem = configJson->u.object.values[i].value;
         size_t	strLen = strlen(configJson->u.object.values[i].name);
 
@@ -122,6 +126,8 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
         pseudo.devID = 0;
         pseudo.regAddr = 0;
+        pseudo.regCount = 0;
+        pseudo.funcCode = 0;
         pseudo.offset = 0;
         pseudo.intervalSec = 1;
         pseudo.multiplier = 0;
@@ -131,43 +137,92 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
             if (0 == strcmp(configItem->u.object.values[p].name, DevIDKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                if (item->type == json_integer) {
-                    pseudo.devID = (unsigned long)item->u.integer;
-                }
-                else if (item->type == json_string) {
-                    char *e;
-                    pseudo.devID = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+                if (json_GetNumericValue(item, &value, 16)) {
+                    pseudo.devID = value;
+                } else {
+                    isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
-                char *e;
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                pseudo.regAddr = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+                if (json_GetNumericValue(item, &value, 16)) {
+                    pseudo.regAddr = value;
+                } else {
+                    isAddList = false;
+                }
+            }
+            else if (0 == strcmp(configItem->u.object.values[p].name, RegisterCountKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
+
+                if (json_GetNumericValue(item, &value, 16)) {
+                    pseudo.regCount = value;
+                    if (pseudo.regCount < 1 || pseudo.regCount > 2) {
+                        isAddList = false;
+                    }
+                } else {
+                    isAddList = false;
+                }
+            }
+            else if (0 == strcmp(configItem->u.object.values[p].name, FuncCodeKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
+
+                if (json_GetNumericValue(item, &value, 16)) {
+                    pseudo.funcCode = value;
+                    switch (pseudo.funcCode)
+                    {
+                    case FC_READ_HOLDING_REGISTER:
+                    case FC_READ_INPUT_REGISTERS:
+                        break;
+                    default:
+                        isAddList = false;
+                        break;
+                    }
+                } else {
+                    isAddList = false;
+                }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                pseudo.intervalSec = (unsigned long)item->u.integer;
-                if (pseudo.intervalSec <= 0) {
-                    pseudo.intervalSec = 1;
+                if (json_GetNumericValue(item, &value, 10)) {
+                    pseudo.intervalSec = value;
+                    if (pseudo.intervalSec <= 0) {
+                        pseudo.intervalSec = 1;
+                    }
+                } else {
+                    isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                pseudo.offset = (unsigned short)item->u.integer;
+                if (json_GetNumericValue(item, &value, 10)) {
+                    pseudo.offset = (uint16_t)value;
+                }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, MultiplylKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                pseudo.multiplier = (unsigned long)item->u.integer;
+                if (json_GetNumericValue(item, &value, 10)) {
+                    pseudo.multiplier = value;
+                }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, DeviderKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                pseudo.devider = (unsigned long)item->u.integer;
+                if (json_GetNumericValue(item, &value, 10)) {
+                    pseudo.devider = value;
+                }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
                 json_value* item = configItem->u.object.values[p].value;
@@ -176,7 +231,9 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             }
 
         }
-        vector_add_last(me->mFetchItems, &pseudo);
+        if (isAddList) {
+            vector_add_last(me->mFetchItems, &pseudo);
+        }
     }
 
     if (! vector_is_empty(me->mFetchItems)) {
