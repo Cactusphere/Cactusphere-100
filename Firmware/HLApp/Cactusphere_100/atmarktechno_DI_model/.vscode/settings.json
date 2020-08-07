@@ -5,8 +5,8 @@
     "cmake.configureArgs": [ "--no-warn-unused-cli" ],
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE": "${command:azuresphere.AzureSphereSdkDir}/CMakeFiles/AzureSphereToolchain.cmake",
-        "AZURE_SPHERE_TARGET_API_SET": "latest-beta",
-        "APP_VERSION": "v1.0.0",
+        "AZURE_SPHERE_TARGET_API_SET": "latest-lts",
+        "APP_VERSION": "v1.0.1",
         "PRODUCT": "atmarktechno_DI_model",
     },
     "cmake.configureOnOpen": true,

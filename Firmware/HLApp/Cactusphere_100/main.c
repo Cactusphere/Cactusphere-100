@@ -487,7 +487,7 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate, "HLAppVersion", HLAPP_VERSION);
             IoT_CentralLib_SendProperty(propertyStr);
             // RTApp
-            char rtAppVersion[256];
+            char rtAppVersion[256] = { 0 };
             bool ret = false;
 #ifdef USE_DI
             ret = DI_Lib_ReadRTAppVersion(rtAppVersion);
@@ -785,6 +785,9 @@ static const char *GetReasonString(IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason
         break;
     case IOTHUB_CLIENT_CONNECTION_OK:
         reasonString = "IOTHUB_CLIENT_CONNECTION_OK";
+        break;
+    case IOTHUB_CLIENT_CONNECTION_NO_PING_RESPONSE:
+        reasonString = "IOTHUB_CLIENT_CONNECTION_NO_PING_RESPONSE";
         break;
     }
     return reasonString;
