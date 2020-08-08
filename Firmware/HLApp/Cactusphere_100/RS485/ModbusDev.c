@@ -97,10 +97,10 @@ ModbusDev_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short*
     return ModbusDevRTU_ReadRegister(me->ctx, regAddr, funcCode, dst, regCount);
 }
 
-// Write single register
+// Write 2byte
 bool
-ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value) {
-    return ModbusDevRTU_WriteSingleRegister(me->ctx, regAddr, value);
+ModbusDev_WriteRegister(ModbusDev* me, int regAddr, int funcCode, uint16_t value) {
+    return ModbusDevRTU_WriteRegister(me->ctx, regAddr, funcCode, value);
 }
 
 // Get RTApp Version

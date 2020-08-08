@@ -214,10 +214,9 @@ ModbusDevRTU_Connect(ModbusCtx* me) {
     return true;
 }
 
-// Write single register
+// Write 2byte
 bool
-ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short value) {
-    int function = FC_WRITE_SINGLE_REGISTER;
+ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value) {
     int rc;
     int req_length;
     uint8_t req[MIN_REQ_LENGTH];
@@ -225,7 +224,7 @@ ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short valu
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
 
-    req_length = ModbusRTU_CreateRequestMsg(me, function, regAddr, (int)value, req);
+    req_length = ModbusRTU_CreateRequestMsg(me, funcCode, regAddr, (int)value, req);
 
     msg->header.requestCode = UART_REQ_WRITE_AND_READ;
 

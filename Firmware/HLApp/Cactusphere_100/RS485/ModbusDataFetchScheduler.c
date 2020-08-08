@@ -22,13 +22,18 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
+
 #include "ModbusDataFetchScheduler.h"
 
 #include "LibModbus.h"
 #include "ModbusFetchItem.h"
 #include "ModbusFetchTargets.h"
+#include "ModbusDevConfig.h"
 #include "StringBuf.h"
 #include "TelemetryItems.h"
+
+#define  MODBUS_ONESHOT_COMMAND_PARAM_NUM 4
 
 typedef struct ModbusDataFetchScheduler {
     DataFetchSchedulerBase	Super;
@@ -137,6 +142,82 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
             }
         }
     }
+}
+
+void ModbusOneshotcommand(const unsigned char* payload, size_t size, char* response) {
+    const char DevIDkey[]           = "devID";
+    const char RegisterAddrKey[]    = "registerAddr";
+    const char FuncCodeKey[]        = "funcCode";
+    const char DataKey[]            = "data";
+
+    uint32_t devID = 0;
+    uint32_t regAddr = 0;
+    uint32_t funcCode = 0;
+    uint16_t data = 0;
+
+    json_value* jsonObj = json_parse(payload, size);
+    json_value* configItem = json_parse(jsonObj->u.string.ptr, jsonObj->u.string.length);
+    if (configItem->u.object.length != MODBUS_ONESHOT_COMMAND_PARAM_NUM) {
+        strcpy(response, "\"Illegal config\"");
+        return;
+    }
+
+    for (unsigned int i = 0, n = configItem->u.object.length; i < n; ++i) {
+        if (0 == strcmp(configItem->u.object.values[i].name, DevIDkey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            if (item->type == json_integer) {
+                devID = (unsigned long)item->u.integer;
+            } else if (item->type == json_string) {
+                char *e;
+                devID = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, RegisterAddrKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            if (item->type == json_integer) {
+                regAddr = (unsigned long)item->u.integer;
+            } else if (item->type == json_string) {
+                char *e;
+                regAddr = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, FuncCodeKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            if (item->type == json_integer) {
+                funcCode = (unsigned long)item->u.integer;
+            } else if (item->type == json_string) {
+                char *e;
+                funcCode = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, DataKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            if (item->type == json_integer) {
+                data = (unsigned short)item->u.integer;
+            } else if (item->type == json_string) {
+                char *e;
+                data = (unsigned short)strtol(item->u.string.ptr, &e, 16);
+            }
+        }
+    }
+
+    // funcCode check
+    if ((funcCode != FC_WRITE_FORCE_SINGLE_COIL) &&
+        (funcCode != FC_WRITE_SINGLE_REGISTER)) {
+        strcpy(response, "\"Illegal funcCode\"");
+        return;
+    }
+
+    ModbusDev* modbusdev = Libmodbus_GetAndConnectLib((int)devID);
+    if (modbusdev == NULL) {
+        strcpy(response, "\"Illegal devID\"");
+        return;
+    }
+
+    if (Libmodbus_WriteRegister(modbusdev, (int)regAddr, (int)funcCode, &data)) {
+        strcpy(response, "\"Success\"");
+    } else {
+        strcpy(response, "\"Error\"");
+    }
+
+    return;
 }
 
 DataFetchScheduler*

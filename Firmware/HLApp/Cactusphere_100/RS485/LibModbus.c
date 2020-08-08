@@ -143,8 +143,8 @@ ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
 bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount) {
     return ModbusDev_ReadRegister(me, regAddr, funcCode, dst, regCount);
 }
-bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data) {
-    return ModbusDev_WriteSingleRegister(me, regAddr, *data);
+bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* data) {
+    return ModbusDev_WriteRegister(me, regAddr, funcCode, *data);
 }
 
 // Get RTApp Version

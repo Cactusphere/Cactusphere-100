@@ -39,8 +39,8 @@ extern bool ModbusDevRTU_Connect(ModbusCtx* me);
 // Read status/register
 extern bool ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length);
 
-// Write 1byte
-extern bool ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short value);
+// Write 2byte
+extern bool ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value);
 
 // Get RTApp Version
 extern bool ModbusDevRTU_GetRTAppVersion(char* rtAppVersion);

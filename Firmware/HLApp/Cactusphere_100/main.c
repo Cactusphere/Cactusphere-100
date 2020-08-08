@@ -109,6 +109,7 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 #include "ModbusConfigMgr.h"
 #include "ModbusFetchConfig.h"
 #include "LibModbus.h"
+#include "ModbusDataFetchScheduler.h"
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -774,10 +775,25 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         goto end;
     }
 
-#ifdef USE_DI
     char deviceMethodResponse[100];
     char reportedPropertiesString[100];
 
+#ifdef USE_MODBUS
+    static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
+
+    ModbusOneshotcommand(payload, size, deviceMethodResponse);
+    
+    // send result
+    *response_size = strlen(deviceMethodResponse);
+    *response = malloc(*response_size);
+    if (NULL != response) {
+        (void)memcpy(*response, deviceMethodResponse, *response_size);
+    }
+    snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
+    IoT_CentralLib_SendProperty(reportedPropertiesString);
+#endif
+    
+#ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
     static const char* ReportMsgTemplate = "{ \"ClearCounterResult_DI%d\": \"%s\" }";
