@@ -89,6 +89,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     const json_value* json, const char* version)
 {
     json_value* configJson = NULL;
+    bool ret = false;
 
     // clean up old configuration and load new content
     if (0 != vector_size(me->mFetchItems)) {
@@ -245,9 +246,9 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             ++curs;
         }
 
-        return true;
+        ret = true;
     }
-    return false;
+    return ret;
 }
 
 // Get configuration

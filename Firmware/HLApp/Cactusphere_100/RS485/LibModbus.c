@@ -76,6 +76,7 @@ void Libmodbus_ModbusDevClear(void) {
 // Regist
 bool Libmodbus_LoadFromJSON(const json_value* json) {
     json_value* configJson = NULL;
+    bool ret = true;
 
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusDevConfigKey, json->u.object.values[i].name)) {
@@ -85,7 +86,8 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
     }
 
     if (configJson == NULL) {
-        return false;
+        ret = false;
+        goto end;
     }
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
@@ -97,7 +99,8 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
         devId = strtol(configJson->u.object.values[i].name, &e, 16);
 
         if (devId == 0) {
-            return false;
+            ret = false;
+            continue;
         }
 
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
@@ -113,12 +116,14 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
             }
         }
         if (baudrate < MIN_BAUDRATE || baudrate > MAX_BAUDRATE) {
+            ret = false;
             continue;
         }
         Libmodbus_AddModbusDev(devId, baudrate);
     }
 
-    return true;
+end:
+    return ret;
 }
 
 ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
