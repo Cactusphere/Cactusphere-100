@@ -25,6 +25,9 @@
 #ifndef _FETCH_ITEM_BASE_H_
 #define _FETCH_ITEM_BASE_H_
 
+#ifndef _STDBOOL
+#include <stdbool.h>
+#endif
 #ifndef _STDINT_H
 #include <stdint.h>
 #endif
@@ -34,6 +37,7 @@
 typedef struct FetchItemBase {
     char        telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
     uint32_t    intervalSec;    // periodic acquisition interval (in seconds)
+    bool        isTimerReset;   // flag of reset the timer
 } FetchItemBase;
 
 #endif  // _FETCH_ITEM_BASE_H_

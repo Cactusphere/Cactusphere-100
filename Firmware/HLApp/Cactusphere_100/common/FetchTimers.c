@@ -24,12 +24,25 @@
 
 #include "FetchTimers.h"
 
+#include <string.h>
+#include <applibs/log.h>
+
+typedef struct FetchTimerList {
+    char        telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
+    uint32_t    downCounter;
+} FetchTimerList;
+
 // Initialization
 static void
-FetchTimer_Init(FetchTimer* me, FetchItemBase* fi)
+FetchTimer_Init(FetchTimer* me, FetchItemBase* fi, uint32_t downCounter)
 {
+    if (fi->isTimerReset) {
+        me->downCounter = fi->intervalSec;
+        fi->isTimerReset = false;
+    } else {
+        me->downCounter = downCounter;
+    }
     me->fetchItem   = fi;
-    me->downCounter = fi->intervalSec;
 }
 
 // Initialization and cleanup
@@ -59,15 +72,47 @@ FetchTimers_Init(FetchTimers* me, vector fetchItemPtrs)
     // initialize the generalized/base class's member and do 
     // specialized/derived class specific timer related initialization
     FetchItemBase**	fetchItemCurs = vector_get_data(fetchItemPtrs);
+    FetchTimerList* list = NULL;
+    int listsize = vector_size(me->mBody);
+    
+    if (listsize > 0) {
+        list = malloc( sizeof(FetchTimerList) * (size_t)listsize);
+        if (list) {
+            return;
+        }
+        memset(list, 0, sizeof(FetchTimerList) * (size_t)listsize);
+
+        FetchTimer* curs = (FetchTimer*)vector_get_data(me->mBody);
+        for (int i = 0; i < listsize; i++) {
+            strcpy(list[i].telemetryName, curs->fetchItem->telemetryName);
+            list[i].downCounter = curs->downCounter;
+            curs++;
+        }
+    }
 
     vector_clear(me->mBody);
     for (int i = 0, n = vector_size(fetchItemPtrs); i < n; ++i) {
         FetchItemBase*	fetchItem = *fetchItemCurs++;
         FetchTimer	pseudo;
+        uint32_t downCounter = 0;
 
-        FetchTimer_Init(&pseudo, fetchItem);
+        if (! fetchItem->isTimerReset) {
+            if (list) {
+                for (int j = 0; j < listsize; j ++) {
+                    if (0 == strcmp(fetchItem->telemetryName, list[j].telemetryName)) {
+                        downCounter = list[j].downCounter;
+                    }
+                }
+            }
+        }
+
+        FetchTimer_Init(&pseudo, fetchItem, downCounter);
         vector_add_last(me->mBody, &pseudo);
         me->InitForTimer(me, fetchItem);  // specialized class specific
+    }
+
+    if (list) {
+        free(list);
     }
 }
 
