@@ -102,7 +102,6 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 
 #if (APP_PRODUCT_ID == PRODUCT_ATMARK_TECHNO_RS485)
 #define USE_MODBUS
-#define USE_MODBUS_TCP
 #endif // PRODUCT_ATMARK_TECHNO_RS485
 
 #ifdef USE_MODBUS
