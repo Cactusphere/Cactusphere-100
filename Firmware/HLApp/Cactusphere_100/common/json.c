@@ -1050,7 +1050,7 @@ json_GetKeyJson(unsigned char* key, const json_value* jsonObj) {
     return obj;
 }
 
-bool json_GetNumericValue(const json_value* jsonObj, uint32_t* value) {
+bool json_GetNumericValue(const json_value* jsonObj, uint32_t* value, int base) {
    bool ret = false;
    if (jsonObj) {
       switch (jsonObj->type)
@@ -1060,7 +1060,7 @@ bool json_GetNumericValue(const json_value* jsonObj, uint32_t* value) {
          ret = true;
          break;
       case json_string:
-         *value = strtoul(jsonObj->u.string.ptr, NULL, 10);
+         *value = strtoul(jsonObj->u.string.ptr, NULL, base);
          ret = true;
          break;
       default:

@@ -109,6 +109,7 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 #include "ModbusConfigMgr.h"
 #include "ModbusFetchConfig.h"
 #include "LibModbus.h"
+#include "ModbusDataFetchScheduler.h"
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -680,10 +681,37 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
     vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
 
 #ifdef USE_MODBUS
-    ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
-    DataFetchScheduler_Init(
-        mTelemetrySchedulerArr[MODBUS_RTU],
-        ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
+    SphereWarning err = ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    switch (err)
+    {
+    case NO_ERROR:
+    case ILLEGAL_PROPERTY:
+        DataFetchScheduler_Init(
+            mTelemetrySchedulerArr[MODBUS_RTU],
+            ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
+        
+        if (err == NO_ERROR) {
+            gLedState = LED_ON;
+        } else { // ILLEGAL_PROPERTY
+            // do not set ct_error and exitCode,
+            // as it won't hang with this error.
+            Log_Debug("ERROR: Receive illegal property.\n");
+            gLedState = LED_BLINK;
+            cactusphere_error_notify(err);
+        }
+        break;
+    case ILLEGAL_DESIRED_PROPERTY:
+        Log_Debug("ERROR: Receive illegal desired property.\n");
+        ct_error = -(int)err;
+        break;
+    case UNSUPPORTED_PROPERTY:
+        Log_Debug("ERROR: Receive unsupported property.\n");
+        ct_error = -(int)err;
+        break;
+
+    default:
+        break;
+    }
     SendPropertyResponse(Send_PropertyItem);
 #endif  // USE_MODBUS
 
@@ -729,15 +757,15 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         break;
     }
 
+#endif  // USE_DI
+    vector_destroy(Send_PropertyItem);
+
     if (ct_error < 0) {
         // hang
         gLedState = LED_BLINK;
         cactusphere_error_notify(err);
         exitCode = ExitCode_TermHandler_SigTerm;
     }
-
-#endif  // USE_DI
-    vector_destroy(Send_PropertyItem);
 }
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
@@ -747,10 +775,25 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         goto end;
     }
 
-#ifdef USE_DI
     char deviceMethodResponse[100];
     char reportedPropertiesString[100];
 
+#ifdef USE_MODBUS
+    static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
+
+    ModbusOneshotcommand(payload, size, deviceMethodResponse);
+    
+    // send result
+    *response_size = strlen(deviceMethodResponse);
+    *response = malloc(*response_size);
+    if (NULL != response) {
+        (void)memcpy(*response, deviceMethodResponse, *response_size);
+    }
+    snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
+    IoT_CentralLib_SendProperty(reportedPropertiesString);
+#endif
+    
+#ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
     static const char* ReportMsgTemplate = "{ \"ClearCounterResult_DI%d\": \"%s\" }";

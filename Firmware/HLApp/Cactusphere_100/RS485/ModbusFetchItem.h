@@ -30,14 +30,16 @@
 #include <stdbool.h>
 
 typedef struct ModbusFetchItem {
-    char	    telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
-    uint32_t	intervalSec;    // periodic acquisition interval (in seconds)
-    uint32_t	devID;          // slave device ID
-    uint32_t	regAddr;        // register address
-    uint16_t	offset;         // sum value
-    uint32_t	multiplier;     // multiply value
-    uint32_t	devider;        // divide value
-    bool	    asFloat;        // true:float, false: not float 
+    char        telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
+    uint32_t    intervalSec;    // periodic acquisition interval (in seconds)
+    uint32_t    devID;          // slave device ID
+    uint32_t    regAddr;        // register address
+    uint32_t    regCount;       // read register count
+    uint32_t    funcCode;       // function code
+    uint16_t    offset;         // sum value
+    uint32_t    multiplier;     // multiply value
+    uint32_t    devider;        // divide value
+    bool        asFloat;        // true:float, false: not float 
 } ModbusFetchItem;
 
 #endif  // _MODBUS_FETCH_ITEM_H_

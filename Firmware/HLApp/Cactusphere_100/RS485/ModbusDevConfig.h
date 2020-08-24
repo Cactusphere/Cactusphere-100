@@ -22,26 +22,13 @@
  * THE SOFTWARE.
  */
 
-#ifndef _MODBUS_DEV_RTU_H_
-#define _MODBUS_DEV_RTU_H_
+#ifndef _MODBUS_DEV_CONFIG_H_
+#define _MODBUS_DEV_CONFIG_H_
 
-#include <stdbool.h>
+// Allowed function code
+#define FC_READ_HOLDING_REGISTER    0x03
+#define FC_READ_INPUT_REGISTERS     0x04
+#define FC_WRITE_FORCE_SINGLE_COIL  0x05
+#define FC_WRITE_SINGLE_REGISTER    0x06
 
-typedef struct ModbusCtx ModbusCtx;
-
-// Initialization and cleanup
-extern ModbusCtx* ModbusDevRTU_Initialize(int devId, int baud);
-extern void ModbusDevRTU_Destroy(ModbusCtx* me);
-
-// Connect
-extern bool ModbusDevRTU_Connect(ModbusCtx* me);
-
-// Read status/register
-extern bool ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length);
-
-// Write 2byte
-extern bool ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value);
-
-// Get RTApp Version
-extern bool ModbusDevRTU_GetRTAppVersion(char* rtAppVersion);
-#endif  // _MODBUS_DEV_RTU_H_
+#endif  // _MODBUS_DEV_CONFIG_H_

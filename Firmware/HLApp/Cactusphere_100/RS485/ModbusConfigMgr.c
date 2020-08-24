@@ -58,23 +58,28 @@ ModbusConfigMgr_Cleanup(void)
 }
 
 // Apply new configuration
-void
+SphereWarning
 ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     unsigned int payloadSize, vector item)
 {
+    SphereWarning ret = NO_ERROR;
     json_value* jsonObj = json_parse(payload, payloadSize);
     json_value* desiredObj = NULL;
     json_value* modbusConfObj = NULL;
     json_value* telemetryConfObj = NULL;
 
     desiredObj = json_GetKeyJson("desired", jsonObj);
-
     if (desiredObj == NULL) {
         modbusConfObj = json_GetKeyJson("ModbusDevConfig", jsonObj);
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", jsonObj);
     } else {
         modbusConfObj = json_GetKeyJson("ModbusDevConfig", desiredObj);
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", desiredObj);
+    }
+
+    if (modbusConfObj == NULL && telemetryConfObj == NULL) {
+        ret = UNSUPPORTED_PROPERTY;
+        goto end;
     }
 
     if (modbusConfObj != NULL) {
@@ -85,10 +90,12 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
             Libmodbus_ModbusDevClear();
             if (!Libmodbus_LoadFromJSON(modbusConfObj)) {
                 Log_Debug("ModbusDevConfig LoadToJsonError!\n");
+                ret = ILLEGAL_PROPERTY;
             }
         }
         else {
             Log_Debug("ModbusDevConfig parse error!\n");
+            ret = ILLEGAL_PROPERTY;
         }
     }
 
@@ -99,11 +106,16 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
         if (telemetryConfObj != NULL) {
             if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0")) {
                 Log_Debug("ModbusTelemetryConfig LoadToJsonError!\n");
+                ret = ILLEGAL_PROPERTY;
             }
         } else {
             Log_Debug("ModbusTelemetryConfig parse error!\n");
+            ret = ILLEGAL_PROPERTY;
         }
     }
+
+end:
+    return ret;
 }
 
 // Get configuratioin

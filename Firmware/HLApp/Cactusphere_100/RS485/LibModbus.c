@@ -76,6 +76,7 @@ void Libmodbus_ModbusDevClear(void) {
 // Regist
 bool Libmodbus_LoadFromJSON(const json_value* json) {
     json_value* configJson = NULL;
+    bool ret = true;
 
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusDevConfigKey, json->u.object.values[i].name)) {
@@ -85,7 +86,8 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
     }
 
     if (configJson == NULL) {
-        return false;
+        ret = false;
+        goto end;
     }
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
@@ -97,29 +99,31 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
         devId = strtol(configJson->u.object.values[i].name, &e, 16);
 
         if (devId == 0) {
-            return false;
+            ret = false;
+            continue;
         }
 
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
             if (0 == strcmp(configItem->u.object.values[p].name, BaudrateKey)) {
                 json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
 
-                if (item->type == json_integer) {
-                    baudrate = (int)item->u.integer;
+                if (json_GetNumericValue(item, &value, 16)) {
+                    baudrate = (int)value;
                 }
-                else if (item->type == json_string) {
-                    baudrate = strtol(item->u.string.ptr, &e, 16);
-                }
+
                 break;
             }
         }
         if (baudrate < MIN_BAUDRATE || baudrate > MAX_BAUDRATE) {
+            ret = false;
             continue;
         }
         Libmodbus_AddModbusDev(devId, baudrate);
     }
 
-    return true;
+end:
+    return ret;
 }
 
 ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
@@ -136,11 +140,11 @@ ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
     return modbusDevP;
 }
 
-bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
-    return ModbusDev_ReadSingleRegister(me, regAddr, dst);
+bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount) {
+    return ModbusDev_ReadRegister(me, regAddr, funcCode, dst, regCount);
 }
-bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data) {
-    return ModbusDev_WriteSingleRegister(me, regAddr, *data);
+bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* data) {
+    return ModbusDev_WriteRegister(me, regAddr, funcCode, *data);
 }
 
 // Get RTApp Version
