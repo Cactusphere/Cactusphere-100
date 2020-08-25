@@ -79,7 +79,7 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", desiredObj);
     }
 
-    if (modbusConfObj == NULL && telemetryConfObj == NULL) {
+    if (modbusConfObj == NULL && telemetryConfObj == NULL && desiredObj && desiredObj->u.object.length > 1) {
         ret = UNSUPPORTED_PROPERTY;
         goto end;
     }
