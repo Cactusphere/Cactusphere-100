@@ -86,22 +86,12 @@ ModbusFetchConfig_Destroy(ModbusFetchConfig* me)
 // Load Modbus RTU configuration from JSON
 bool
 ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
-    const json_value* json, const char* version)
+    const json_value* json, bool desireFlg, const char* version)
 {
     json_value* configJson = NULL;
     bool ret = false;
 
-    // clean up old configuration and load new content
-    if (0 != vector_size(me->mFetchItems)) {
-        ModbusFetchItem*	curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
-
-        for (int i = 0, n = vector_size(me->mFetchItems); i < n; ++i) {
-            TelemetryItems_RemoveDictionaryElem(curs->telemetryName);
-        }
-        vector_clear(me->mFetchItemPtrs);
-        vector_clear(me->mFetchItems);
-    }
-
+    // load new content
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusTelemetryConfigKey, json->u.object.values[i].name)) {
             configJson = json->u.object.values[i].value;
@@ -110,9 +100,10 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     }
 
     if (configJson == NULL) {
-        return false;
+        goto end;
     }
 
+    vector tmplist = vector_init(sizeof(ModbusFetchItem));
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         ModbusFetchItem pseudo;
         bool isAddList = true;
@@ -122,6 +113,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         if (strLen > sizeof(pseudo.telemetryName) - 1) {
             strLen = sizeof(pseudo.telemetryName) - 1;
         }
+        memset(pseudo.telemetryName, 0, sizeof(pseudo.telemetryName));
         memcpy(pseudo.telemetryName, configJson->u.object.values[i].name, strLen);
         pseudo.telemetryName[strLen] = '\0';
 
@@ -131,6 +123,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         pseudo.funcCode = 0;
         pseudo.offset = 0;
         pseudo.intervalSec = 1;
+        pseudo.isTimerReset = true;
         pseudo.multiplier = 0;
         pseudo.devider = 0;
         pseudo.asFloat = false;
@@ -233,21 +226,56 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
         }
         if (isAddList) {
-            vector_add_last(me->mFetchItems, &pseudo);
+            vector_add_last(tmplist, &pseudo);
         }
     }
 
-    if (! vector_is_empty(me->mFetchItems)) {
-        ModbusFetchItem* curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
+    if ((0 != vector_size(me->mFetchItems)) && desireFlg) {
+        ModbusFetchItem* tmp = (ModbusFetchItem*)vector_get_data(tmplist);
+        ModbusFetchItem* list = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
+
+        for (int i = 0, n = vector_size(tmplist); i < n; ++i){
+            if (0 != memcmp(list, tmp, sizeof(ModbusFetchItem))) {
+                // re-regist if config is changed.
+                goto add_list;
+            }
+            ++list;
+            ++tmp;
+        }
+        ret = true;
+        goto end;
+    }
+
+add_list:
+    // clean up old configuration
+    if (0 != vector_size(me->mFetchItems)) {
+        ModbusFetchItem*	curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
 
         for (int i = 0, n = vector_size(me->mFetchItems); i < n; ++i) {
-            vector_add_last(me->mFetchItemPtrs, &curs);
-            TelemetryItems_AddDictionaryElem(curs->telemetryName, curs->asFloat);
-            ++curs;
+            TelemetryItems_RemoveDictionaryElem(curs->telemetryName);
         }
+        vector_clear(me->mFetchItemPtrs);
+        vector_clear(me->mFetchItems);
+    }
 
+    // add new configuration
+    if (! vector_is_empty(tmplist)) {
+        ModbusFetchItem* tmp = (ModbusFetchItem*)vector_get_data(tmplist);
+        
+        for (int i = 0, n = vector_size(tmplist); i < n; ++i){
+            vector_add_last(me->mFetchItems, tmp);
+            vector_add_last(me->mFetchItemPtrs, &tmp);
+            TelemetryItems_AddDictionaryElem(tmp->telemetryName, tmp->asFloat);
+            ++tmp;
+        }
         ret = true;
     }
+
+end:
+    if (tmplist) {
+        vector_destroy(tmplist);
+    }
+
     return ret;
 }
 

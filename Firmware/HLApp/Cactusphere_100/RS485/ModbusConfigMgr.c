@@ -67,12 +67,14 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     json_value* desiredObj = NULL;
     json_value* modbusConfObj = NULL;
     json_value* telemetryConfObj = NULL;
+    bool desireFlg = false;
 
     desiredObj = json_GetKeyJson("desired", jsonObj);
     if (desiredObj == NULL) {
         modbusConfObj = json_GetKeyJson("ModbusDevConfig", jsonObj);
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", jsonObj);
     } else {
+        desireFlg = true;
         modbusConfObj = json_GetKeyJson("ModbusDevConfig", desiredObj);
         telemetryConfObj = json_GetKeyJson("ModbusTelemetryConfig", desiredObj);
     }
@@ -104,7 +106,7 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
         PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_STR, telemetryConfObj->u.string.ptr);
         telemetryConfObj = json_parse(telemetryConfObj->u.string.ptr, telemetryConfObj->u.string.length);
         if (telemetryConfObj != NULL) {
-            if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0")) {
+            if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, desireFlg, "1.0")) {
                 Log_Debug("ModbusTelemetryConfig LoadToJsonError!\n");
                 ret = ILLEGAL_PROPERTY;
             }
