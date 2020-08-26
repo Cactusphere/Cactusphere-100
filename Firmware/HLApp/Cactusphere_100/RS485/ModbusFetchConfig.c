@@ -136,6 +136,9 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
                 if (json_GetNumericValue(item, &value, 16)) {
                     pseudo.devID = value;
+                    if (pseudo.devID == 0) {
+                        ret = isAddList = false;
+                    }
                 } else {
                     ret = isAddList = false;
                 }
