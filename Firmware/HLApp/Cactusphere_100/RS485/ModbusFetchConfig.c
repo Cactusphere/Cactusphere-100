@@ -89,7 +89,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     const json_value* json, bool desireFlg, const char* version)
 {
     json_value* configJson = NULL;
-    bool ret = false;
+    bool ret = true;
 
     // load new content
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
@@ -100,6 +100,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     }
 
     if (configJson == NULL) {
+        ret = false;
         goto end;
     }
 
@@ -136,7 +137,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
                 if (json_GetNumericValue(item, &value, 16)) {
                     pseudo.devID = value;
                 } else {
-                    isAddList = false;
+                    ret = isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
@@ -146,7 +147,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
                 if (json_GetNumericValue(item, &value, 16)) {
                     pseudo.regAddr = value;
                 } else {
-                    isAddList = false;
+                    ret = isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, RegisterCountKey)) {
@@ -156,10 +157,10 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
                 if (json_GetNumericValue(item, &value, 16)) {
                     pseudo.regCount = value;
                     if (pseudo.regCount < 1 || pseudo.regCount > 2) {
-                        isAddList = false;
+                        ret = isAddList = false;
                     }
                 } else {
-                    isAddList = false;
+                    ret = isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, FuncCodeKey)) {
@@ -174,11 +175,11 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
                     case FC_READ_INPUT_REGISTERS:
                         break;
                     default:
-                        isAddList = false;
+                        ret = isAddList = false;
                         break;
                     }
                 } else {
-                    isAddList = false;
+                    ret = isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
@@ -187,11 +188,11 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
                 if (json_GetNumericValue(item, &value, 10)) {
                     pseudo.intervalSec = value;
-                    if (pseudo.intervalSec <= 0) {
-                        pseudo.intervalSec = 1;
+                    if (pseudo.intervalSec < 1 || pseudo.intervalSec > 86400) {
+                        ret = isAddList = false;
                     }
                 } else {
-                    isAddList = false;
+                    ret = isAddList = false;
                 }
             }
             else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
@@ -242,7 +243,6 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             ++list;
             ++tmp;
         }
-        ret = true;
         goto end;
     }
 
@@ -268,7 +268,6 @@ add_list:
             TelemetryItems_AddDictionaryElem(tmp->telemetryName, tmp->asFloat);
             ++tmp;
         }
-        ret = true;
     }
 
 end:
