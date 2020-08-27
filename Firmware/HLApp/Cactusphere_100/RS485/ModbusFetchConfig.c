@@ -91,7 +91,17 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     json_value* configJson = NULL;
     bool ret = true;
 
-    // load new content
+    // clean up old configuration and load new content
+    if (0 != vector_size(me->mFetchItems)) {
+        ModbusFetchItem*	curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
+
+        for (int i = 0, n = vector_size(me->mFetchItems); i < n; ++i) {
+            TelemetryItems_RemoveDictionaryElem(curs->telemetryName);
+        }
+        vector_clear(me->mFetchItemPtrs);
+        vector_clear(me->mFetchItems);
+    }
+
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusTelemetryConfigKey, json->u.object.values[i].name)) {
             configJson = json->u.object.values[i].value;
@@ -104,7 +114,6 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         goto end;
     }
 
-    vector tmplist = vector_init(sizeof(ModbusFetchItem));
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         ModbusFetchItem pseudo;
         bool isAddList = true;
@@ -196,54 +205,22 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             }
         }
         if (isAddList) {
-            vector_add_last(tmplist, &pseudo);
+            vector_add_last(me->mFetchItems, &pseudo);
         }
-    }
-
-    if ((0 != vector_size(me->mFetchItems)) && desireFlg) {
-        ModbusFetchItem* tmp = (ModbusFetchItem*)vector_get_data(tmplist);
-        ModbusFetchItem* list = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
-
-        for (int i = 0, n = vector_size(tmplist); i < n; ++i){
-            if (0 != memcmp(list, tmp, sizeof(ModbusFetchItem))) {
-                // re-regist if config is changed.
-                goto add_list;
-            }
-            ++list;
-            ++tmp;
-        }
-        goto end;
-    }
-
-add_list:
-    // clean up old configuration
-    if (0 != vector_size(me->mFetchItems)) {
-        ModbusFetchItem*	curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
-
-        for (int i = 0, n = vector_size(me->mFetchItems); i < n; ++i) {
-            TelemetryItems_RemoveDictionaryElem(curs->telemetryName);
-        }
-        vector_clear(me->mFetchItemPtrs);
-        vector_clear(me->mFetchItems);
     }
 
     // add new configuration
-    if (! vector_is_empty(tmplist)) {
-        ModbusFetchItem* tmp = (ModbusFetchItem*)vector_get_data(tmplist);
-        
-        for (int i = 0, n = vector_size(tmplist); i < n; ++i){
-            vector_add_last(me->mFetchItems, tmp);
-            vector_add_last(me->mFetchItemPtrs, &tmp);
-            TelemetryItems_AddDictionaryElem(tmp->telemetryName, tmp->asFloat);
-            ++tmp;
+    if (! vector_is_empty(me->mFetchItems)) {
+        ModbusFetchItem* curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
+
+        for (int i = 0, n = vector_size(me->mFetchItems); i < n; ++i) {
+            vector_add_last(me->mFetchItemPtrs, &curs);
+            TelemetryItems_AddDictionaryElem(curs->telemetryName, curs->asFloat);
+            ++curs;
         }
     }
 
 end:
-    if (tmplist) {
-        vector_destroy(tmplist);
-    }
-
     return ret;
 }
 
