@@ -165,35 +165,34 @@ void ModbusOneshotcommand(const unsigned char* payload, size_t size, char* respo
     for (unsigned int i = 0, n = configItem->u.object.length; i < n; ++i) {
         if (0 == strcmp(configItem->u.object.values[i].name, DevIDkey)) {
             json_value* item = configItem->u.object.values[i].value;
-            if (item->type == json_integer) {
-                devID = (unsigned long)item->u.integer;
-            } else if (item->type == json_string) {
-                char *e;
-                devID = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            bool ret = json_GetNumericValue(item, &devID, 16);
+            if (!ret || devID == 0) {
+                strcpy(response, "\"Illegal devID\"");
+                return;
             }
         } else if (0 == strcmp(configItem->u.object.values[i].name, RegisterAddrKey)) {
             json_value* item = configItem->u.object.values[i].value;
-            if (item->type == json_integer) {
-                regAddr = (unsigned long)item->u.integer;
-            } else if (item->type == json_string) {
-                char *e;
-                regAddr = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            bool ret = json_GetNumericValue(item, &regAddr, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal regAddr\"");
+                return;
             }
         } else if (0 == strcmp(configItem->u.object.values[i].name, FuncCodeKey)) {
             json_value* item = configItem->u.object.values[i].value;
-            if (item->type == json_integer) {
-                funcCode = (unsigned long)item->u.integer;
-            } else if (item->type == json_string) {
-                char *e;
-                funcCode = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            bool ret = json_GetNumericValue(item, &funcCode, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal funcCode\"");
+                return;
             }
         } else if (0 == strcmp(configItem->u.object.values[i].name, DataKey)) {
             json_value* item = configItem->u.object.values[i].value;
-            if (item->type == json_integer) {
-                data = (unsigned short)item->u.integer;
-            } else if (item->type == json_string) {
-                char *e;
-                data = (unsigned short)strtol(item->u.string.ptr, &e, 16);
+            uint32_t value;
+            bool ret = json_GetNumericValue(item, &value, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal data\"");
+                return;
+            } else {
+                data = (uint16_t)value;
             }
         }
     }
