@@ -85,7 +85,9 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     }
 
     if (modbusConfObj != NULL) {
-        modbusConfObj = json_GetKeyJson("value", modbusConfObj);
+        if (modbusConfObj->type != json_string) {
+            modbusConfObj = json_GetKeyJson("value", modbusConfObj);
+        }
         PropertyItems_AddItem(item, "ModbusDevConfig", TYPE_STR, modbusConfObj->u.string.ptr);
         modbusConfObj = json_parse(modbusConfObj->u.string.ptr, modbusConfObj->u.string.length);
         if (modbusConfObj != NULL) {
@@ -102,7 +104,9 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     }
 
     if (telemetryConfObj != NULL) {
-        telemetryConfObj = json_GetKeyJson("value", telemetryConfObj);
+        if (telemetryConfObj->type != json_string) {
+            telemetryConfObj = json_GetKeyJson("value", telemetryConfObj);
+        }
         PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_STR, telemetryConfObj->u.string.ptr);
         telemetryConfObj = json_parse(telemetryConfObj->u.string.ptr, telemetryConfObj->u.string.length);
         if (telemetryConfObj != NULL) {
