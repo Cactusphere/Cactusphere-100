@@ -50,6 +50,13 @@ const char MultiplylKey[]               = "multiply";
 const char DeviderKey[]                 = "devider";
 const char AsFloatKey[]                 = "asFloat";
 
+#define SET_TELEMETRYCONF_DEVID    0x01
+#define SET_TELEMETRYCONF_REGADDR  0x02
+#define SET_TELEMETRYCONF_REGCNT   0x04
+#define SET_TELEMETRYCONF_FUNCCODE 0x08
+#define SET_TELEMETRYCONF_INTERVAL 0x10
+#define SET_TELEMETRYCONF_REQUIRED 0x1F
+
 // Initialization and cleanup
 ModbusFetchConfig*
 ModbusFetchConfig_New(void)
@@ -116,7 +123,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         ModbusFetchItem pseudo;
-        bool isAddList = true;
+        int setFlag = 0;
         json_value* configItem = configJson->u.object.values[i].value;
         size_t	strLen = strlen(configJson->u.object.values[i].name);
 
@@ -143,69 +150,73 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
                 json_value* item = configItem->u.object.values[p].value;
                 bool ret_parse = json_GetNumericValue(item, &pseudo.devID, 16);
                 if (!ret_parse || pseudo.devID == 0) {
-                    ret = isAddList = false;
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_DEVID;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 bool ret_parse = json_GetNumericValue(item, &pseudo.regAddr, 16);
                 if (!ret_parse) {
-                    ret = isAddList = false;
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_REGADDR;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, RegisterCountKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, RegisterCountKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 bool ret_parse = json_GetNumericValue(item, &pseudo.regCount, 16);
                 if (!ret_parse || pseudo.regCount < 1 || pseudo.regCount > 2) {
-                    ret = isAddList = false;
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_REGCNT;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, FuncCodeKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, FuncCodeKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 bool ret_parse = json_GetNumericValue(item, &pseudo.funcCode, 16);
                 if (!ret_parse) {
-                    ret = isAddList = false;
+                    ret = false;
                 } else {
                     switch (pseudo.funcCode)
                     {
                     case FC_READ_HOLDING_REGISTER:
                     case FC_READ_INPUT_REGISTERS:
+                        setFlag += SET_TELEMETRYCONF_FUNCCODE;
                         break;
                     default:
-                        ret = isAddList = false;
+                        ret = false;
                         break;
                     }
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 bool ret_parse = json_GetNumericValue(item, &pseudo.intervalSec, 10);
                 if (!ret_parse || pseudo.intervalSec < 1 || pseudo.intervalSec > 86400) {
-                    ret = isAddList = false;
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_INTERVAL;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 uint32_t value;
                 if (json_GetNumericValue(item, &value, 10)) {
                     pseudo.offset = (uint16_t)value;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, MultiplylKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, MultiplylKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 json_GetNumericValue(item, &pseudo.multiplier, 10);
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, DeviderKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, DeviderKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 json_GetNumericValue(item, &pseudo.devider, 10);
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 pseudo.asFloat = item->u.boolean;
             }
         }
-        if (isAddList) {
+        
+        if (setFlag == SET_TELEMETRYCONF_REQUIRED) {
             vector_add_last(me->mFetchItems, &pseudo);
+        } else {
+            ret = false;
         }
     }
 
