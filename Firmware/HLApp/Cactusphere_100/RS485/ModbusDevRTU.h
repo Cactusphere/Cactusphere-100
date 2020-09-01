@@ -26,11 +26,12 @@
 #define _MODBUS_DEV_RTU_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct ModbusCtx ModbusCtx;
 
 // Initialization and cleanup
-extern ModbusCtx* ModbusDevRTU_Initialize(int devId, int baud);
+extern ModbusCtx* ModbusDevRTU_Initialize(int devId, int baud, uint8_t parity, uint8_t stop);
 extern void ModbusDevRTU_Destroy(ModbusCtx* me);
 
 // Connect

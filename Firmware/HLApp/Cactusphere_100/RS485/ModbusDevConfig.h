@@ -31,4 +31,16 @@
 #define FC_WRITE_FORCE_SINGLE_COIL  0x05
 #define FC_WRITE_SINGLE_REGISTER    0x06
 
+// parity bit
+typedef enum {
+    PARITY_NONE = 0,
+    PARITY_ODD,
+    PARITY_EVEN,
+    PARITY_NUM
+} ParityBit_Type;
+
+// stop bit
+#define STOPBITS_ONE     1
+#define STOPBITS_TWO     2
+
 #endif  // _MODBUS_DEV_CONFIG_H_

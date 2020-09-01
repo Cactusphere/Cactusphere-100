@@ -37,7 +37,7 @@ extern vector ModbusDev_Initialize(void);
 extern void ModbusDev_Destroy(vector modbusDevVec);
 
 // Create Modbus RTU
-extern ModbusDev* ModbusDev_NewModbusRTU(int devId, int baud);
+extern ModbusDev* ModbusDev_NewModbusRTU(int devId, int baud, uint8_t parity, uint8_t stop);
 
 // Get ModbusDev*
 extern ModbusDev* ModbusDev_GetModbusDev(int devID, vector modbusDevVec);

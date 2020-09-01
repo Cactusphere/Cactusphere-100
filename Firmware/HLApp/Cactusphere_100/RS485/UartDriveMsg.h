@@ -62,6 +62,8 @@ typedef struct UART_MsgWriteAndRead {
     // UART_REQ_SET_PARAMS
 typedef struct UART_MsgSetParams {
     uint32_t	baudRate;
+    uint8_t     parity;
+    uint8_t     stop;
 //
 // sizeof(UART_MsgSetParams) == messageLen
 //
