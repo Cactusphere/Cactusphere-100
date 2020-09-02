@@ -77,7 +77,7 @@ FetchTimers_Init(FetchTimers* me, vector fetchItemPtrs)
     
     if (listsize > 0) {
         list = malloc( sizeof(FetchTimerList) * (size_t)listsize);
-        if (list) {
+        if (!list) {
             return;
         }
         memset(list, 0, sizeof(FetchTimerList) * (size_t)listsize);
