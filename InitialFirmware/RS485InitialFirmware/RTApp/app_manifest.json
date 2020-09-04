@@ -1,0 +1,12 @@
+{
+  "SchemaVersion": 1,
+  "Name": "RS485InitialFirmware_RTApp",
+  "ComponentId": "b3b448f7-535f-bb7d-ce9d-7c90ad45a2b7",
+  "EntryPoint": "/bin/app",
+  "Capabilities": {
+    "Gpio": [ 21, 23 ],
+    "Uart": [ "ISU3" ],
+    "AllowedApplicationConnections": [ "9974f2f0-25d1-fcf4-57df-f44a4a6b324b" ]
+  },
+  "ApplicationType": "RealTimeCapable"
+}
