@@ -61,11 +61,11 @@ ModbusDev_Destroy(vector modbusDevVec) {
 
 // Create Modbus RTU
 ModbusDev* 
-ModbusDev_NewModbusRTU(int devId, int baud) {
+ModbusDev_NewModbusRTU(int devId, int baud, uint8_t parity, uint8_t stop) {
     ModbusDev* newObj;
 
     newObj = (ModbusDev*)malloc(sizeof(ModbusDev));
-    newObj->ctx = ModbusDevRTU_Initialize(devId, baud);
+    newObj->ctx = ModbusDevRTU_Initialize(devId, baud, parity, stop);
 
     newObj->devId = devId;
 
