@@ -93,7 +93,7 @@ ModbusFetchConfig_Destroy(ModbusFetchConfig* me)
 // Load Modbus RTU configuration from JSON
 bool
 ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
-    const json_value* json, bool desireFlg, const char* version)
+    const json_value* json, const char* version)
 {
     json_value* configJson = NULL;
     bool ret = true;
@@ -130,7 +130,6 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         if (strLen > sizeof(pseudo.telemetryName) - 1) {
             strLen = sizeof(pseudo.telemetryName) - 1;
         }
-        memset(pseudo.telemetryName, 0, sizeof(pseudo.telemetryName));
         memcpy(pseudo.telemetryName, configJson->u.object.values[i].name, strLen);
         pseudo.telemetryName[strLen] = '\0';
 
@@ -140,7 +139,6 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         pseudo.funcCode = 0;
         pseudo.offset = 0;
         pseudo.intervalSec = 1;
-        pseudo.isTimerReset = true;
         pseudo.multiplier = 0;
         pseudo.devider = 0;
         pseudo.asFloat = false;

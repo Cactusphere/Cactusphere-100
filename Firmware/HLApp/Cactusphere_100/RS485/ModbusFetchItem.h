@@ -32,7 +32,6 @@
 typedef struct ModbusFetchItem {
     char        telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
     uint32_t    intervalSec;    // periodic acquisition interval (in seconds)
-    bool        isTimerReset;   // flag of reset the timer
     uint32_t    devID;          // slave device ID
     uint32_t    regAddr;        // register address
     uint32_t    regCount;       // read register count

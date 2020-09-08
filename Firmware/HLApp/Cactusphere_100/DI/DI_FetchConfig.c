@@ -88,11 +88,11 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
     const json_value* json, bool desire, vector propertyItem, const char* version)
 {
     DI_FetchItem config[NUM_DI] = {
-        // telemetryName, intervalSec, isTimerReset, pinID, isPulseCounter, isPulseHigh, isCountClear, minPulseWidth, maxPulseCount
-        {"", 1, false, 0, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, false, 1, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, false, 2, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, false, 3, false, false, false, 200, 0x7FFFFFFF}
+        // telemetryName, intervalSec, pinID, isPulseCounter, isPulseHigh, isCountClear, minPulseWidth, maxPulseCount
+        {"", 1, 0, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 1, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 2, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 3, false, false, false, 200, 0x7FFFFFFF}
     };
     bool overWrite[NUM_DI] = {false};
     bool ret = true;
@@ -154,7 +154,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             overWrite[i] = true;
             if (!config[i].isPulseCounter || desire) {
                 // feature has changed
-                config[i].isCountClear = config[i].isTimerReset = true;
+                config[i].isCountClear = true;
                 config[i].intervalSec = 1;
                 config[i].minPulseWidth = 200; // default
                 config[i].maxPulseCount = 0x7FFFFFFF; // default
@@ -165,7 +165,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             overWrite[i] = true;
             if (config[i].isPulseCounter || desire) {
                 // feacture has changed
-                config[i].isCountClear = config[i].isTimerReset = true;
+                config[i].isCountClear = true;
                 config[i].intervalSec = 1;
                 config[i].minPulseWidth = 200; // default
                 config[i].maxPulseCount = 0x7FFFFFFF; // default
@@ -175,11 +175,11 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
         } else if ((config[i].isPulseCounter) && (countVal == 0)) { // PulseCounter ON -> OFF
             // feature has changed (ON->OFF)
             overWrite[i] = false;
-            config[i].isCountClear = config[i].isTimerReset = true;
+            config[i].isCountClear = true;
         } else if ((!config[i].isPulseCounter) && (pollVal == 0)) { // Polling ON -> OFF
             // feature has changed (ON->OFF)
             overWrite[i] = false;
-            config[i].isCountClear = config[i].isTimerReset = true;
+            config[i].isCountClear = true;
         }
     }
 
@@ -195,7 +195,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             }
             if (config[pinid].isPulseCounter) {
                 if (config[pinid].isPulseHigh != (bool)item->u.object.values[0].value->u.boolean) {
-                    config[pinid].isCountClear = config[pinid].isTimerReset = true;
+                    config[pinid].isCountClear = true;
                 }
                 config[pinid].isPulseHigh = (bool)item->u.object.values[0].value->u.boolean;
             }
@@ -212,7 +212,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {
-                        config[pinid].isCountClear = config[pinid].isTimerReset = true;
+                        config[pinid].isCountClear = true;
                     }
                     config[pinid].intervalSec = value;
                 } else {
@@ -233,7 +233,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 1000) {
                     if (config[pinid].minPulseWidth != value) {
-                        config[pinid].isCountClear = config[pinid].isTimerReset = true;
+                        config[pinid].isCountClear = true;
                     }
                     config[pinid].minPulseWidth = value;
                 } else {
@@ -254,7 +254,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             if (config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 0x7FFFFFFF) {
                     if (config[pinid].maxPulseCount != value) {
-                        config[pinid].isCountClear = config[pinid].isTimerReset = true;
+                        config[pinid].isCountClear = true;
                     }
                     config[pinid].maxPulseCount = value;
                 } else {
@@ -274,7 +274,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             if (!config[pinid].isPulseCounter) {
                 if (ret && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {
-                        config[pinid].isCountClear = config[pinid].isTimerReset = true;
+                        config[pinid].isCountClear = true;
                     }
                     config[pinid].intervalSec = value;
                 } else {

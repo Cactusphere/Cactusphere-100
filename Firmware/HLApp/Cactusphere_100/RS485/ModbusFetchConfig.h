@@ -40,7 +40,7 @@ extern void	ModbusFetchConfig_Destroy(ModbusFetchConfig* me);
 
 // Load Modbus RTU configuration from JSON
 extern bool	ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
-    const json_value* json, bool desireFlg, const char* version);
+    const json_value* json, const char* version);
 
 // Get configuration
 extern vector	ModbusFetchConfig_GetFetchItems(ModbusFetchConfig* me);
