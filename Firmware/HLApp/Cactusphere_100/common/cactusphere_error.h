@@ -33,6 +33,8 @@ typedef enum {
     ILLEGAL_PROPERTY,
     ILLEGAL_DESIRED_PROPERTY,
     UNSUPPORTED_PROPERTY,
+    FIRST_CONNECT_IOTC,
+    RE_CONNECT_IOTC,
 } SphereWarning;
 
 void cactusphere_error_notify(SphereWarning ct_error);

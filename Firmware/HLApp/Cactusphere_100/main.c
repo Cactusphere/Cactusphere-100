@@ -137,6 +137,7 @@ static char scopeId[SCOPEID_LENGTH]; // ScopeId for the Azure IoT Central applic
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
 static bool iothubAuthenticated = false;
+static bool iothubFirstConnected = false;
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback);
@@ -471,6 +472,12 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
     Log_Debug("IoT Hub Authenticated: %s\n", GetReasonString(reason));
 
     if (reason == IOTHUB_CLIENT_CONNECTION_OK) {
+        if(!iothubFirstConnected) {
+            cactusphere_error_notify(FIRST_CONNECT_IOTC);
+            iothubFirstConnected = true;
+        } else {
+            cactusphere_error_notify(RE_CONNECT_IOTC);
+        }
 
         int ret;
         Log_Debug("Getting EEPROM information.\n");
