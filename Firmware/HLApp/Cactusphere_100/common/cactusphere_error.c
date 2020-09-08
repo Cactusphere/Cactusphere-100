@@ -49,7 +49,13 @@ void cactusphere_error_notify(SphereWarning ct_error)
     case UNSUPPORTED_PROPERTY:
         IoT_CentralLib_SendTelemetry("{ \"SphereWarning\": \"Receive unsupported property.\" }", &timeStamp);
         break;
-
+    case FIRST_CONNECT_IOTC:
+        IoT_CentralLib_SendTelemetry("{ \"SphereWarning\": \"First connection to IoT Central is complete.\" }", &timeStamp);
+        break;
+    case RE_CONNECT_IOTC:
+        IoT_CentralLib_SendTelemetry("{ \"SphereWarning\": \"Reconnect to IoT Central.\" }", &timeStamp);
+        break;
+        
     default:
         break;
     }
