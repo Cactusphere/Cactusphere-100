@@ -102,7 +102,6 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
         int baudrate = 0;
         uint8_t parity = 0;
         uint8_t stop = 1;
-        bool isAddList = true;
         char *e;
         json_value* configItem = configJson->u.object.values[i].value;
 
