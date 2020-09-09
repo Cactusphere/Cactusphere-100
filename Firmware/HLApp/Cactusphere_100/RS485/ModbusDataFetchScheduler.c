@@ -157,7 +157,7 @@ void ModbusOneshotcommand(const unsigned char* payload, size_t size, char* respo
 
     json_value* jsonObj = json_parse(payload, size);
     json_value* configItem = json_parse(jsonObj->u.string.ptr, jsonObj->u.string.length);
-    if (configItem->u.object.length != MODBUS_ONESHOT_COMMAND_PARAM_NUM) {
+    if (!configItem || configItem->u.object.length != MODBUS_ONESHOT_COMMAND_PARAM_NUM) {
         strcpy(response, "\"Illegal config\"");
         return;
     }
