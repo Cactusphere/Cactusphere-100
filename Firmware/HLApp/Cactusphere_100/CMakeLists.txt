@@ -29,12 +29,6 @@ azsphere_configure_api(TARGET_API_SET "6")
 file(GLOB DRIVERS_SRC drivers/*.c)
 file(GLOB COMMON_SRC common/*.c)
 
-# Default product
-if(NOT PRODUCT)
-    set(PRODUCT "atmarktechno_DI_model")
-    set(APP_VERSION "v1.0.1")
-endif()
-
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/app_manifest.json"
         COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/${PRODUCT}/app_manifest.json" "${PROJECT_SOURCE_DIR}/app_manifest.json"
         DEPENDS "${PROJECT_SOURCE_DIR}/${PRODUCT}/app_manifest.json")
@@ -47,6 +41,7 @@ if(PRODUCT STREQUAL "atmarktechno_DI_model")
     )
     file(GLOB DI_SRC DI/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${DI_SRC})
+    set(APP_VERSION "v1.0.1")
 endif()
 
 if(PRODUCT STREQUAL "atmarktechno_RS485_model")
@@ -56,6 +51,7 @@ if(PRODUCT STREQUAL "atmarktechno_RS485_model")
     )
     file(GLOB RS485_SRC RS485/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${RS485_SRC})
+    set(APP_VERSION "v1.0.0")
 endif()
 
 # App Version
