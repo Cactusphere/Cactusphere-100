@@ -819,6 +819,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
             uint64_t initVal = strtoull(cmdPayload, NULL, 10);
             
             if (initVal > 0x7FFFFFFF) {
+                free(cmdPayload);
                 goto err_value;
             }
             if (!DI_Lib_ResetPulseCount((unsigned long)pinId, (unsigned long)initVal)) {
