@@ -41,7 +41,7 @@ if(PRODUCT STREQUAL "atmarktechno_DI_model")
     )
     file(GLOB DI_SRC DI/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${DI_SRC})
-    set(APP_VERSION "v1.0.1")
+    set(APP_VERSION "v1.0.2")
 endif()
 
 if(PRODUCT STREQUAL "atmarktechno_RS485_model")
