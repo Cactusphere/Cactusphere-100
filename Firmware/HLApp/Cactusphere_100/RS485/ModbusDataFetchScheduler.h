@@ -30,5 +30,6 @@
 #endif
 
 extern DataFetchScheduler* ModbusDataFetchScheduler_New(void);
+extern void ModbusOneshotcommand(const unsigned char* payload, size_t size, char* response);
 
 #endif  // _MODBUS_DATA_FETCH_SCHEDULER_H_

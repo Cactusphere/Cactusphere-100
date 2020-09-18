@@ -28,15 +28,9 @@
 
 #define VENDER_ID_OFFSET        (0x00)
 #define VENDER_ID_LEN           (2)
-#define VENDER_ATMARK_TECHNO    (0x01)
 
 #define PRODUCT_ID_OFFSET       (0x02)
 #define PRODUCT_ID_LEN          (2)
-#define PRODUCT_ATMARK_TECHNO_DIN             (0x01)
-#define PRODUCT_ATMARK_TECHNO_DOUT            (0x02)
-#define PRODUCT_ATMARK_TECHNO_AIN             (0x03)
-#define PRODUCT_ATMARK_TECHNO_AOUT            (0x04)
-#define PRODUCT_ATMARK_TECHNO_RS485           (0x05)
 
 #define GENERATION_OFFSET       (0x04)
 #define GENERATION_LEN          (1)

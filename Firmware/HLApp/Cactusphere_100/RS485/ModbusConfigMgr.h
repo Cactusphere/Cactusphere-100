@@ -26,6 +26,7 @@
 #define _MODBUS_CONFIG_MGR_H_
 
 #include "ModbusFetchConfig.h"
+#include "cactusphere_error.h"
 
 typedef struct ModbusConfigMgr	ModbusConfigMgr;
 
@@ -34,8 +35,8 @@ extern void	ModbusConfigMgr_Initialize(void);
 extern void	ModbusConfigMgr_Cleanup(void);
 
 // Apply new configuration
-extern void	ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
-    unsigned int payloadSize);
+extern SphereWarning ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
+    unsigned int payloadSize, vector item);
 
 // Get configuratioin
 extern ModbusFetchConfig*

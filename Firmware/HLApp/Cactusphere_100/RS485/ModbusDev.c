@@ -61,11 +61,11 @@ ModbusDev_Destroy(vector modbusDevVec) {
 
 // Create Modbus RTU
 ModbusDev* 
-ModbusDev_NewModbusRTU(int devId, int baud) {
+ModbusDev_NewModbusRTU(int devId, int baud, uint8_t parity, uint8_t stop) {
     ModbusDev* newObj;
 
     newObj = (ModbusDev*)malloc(sizeof(ModbusDev));
-    newObj->ctx = ModbusDevRTU_Initialize(devId, baud);
+    newObj->ctx = ModbusDevRTU_Initialize(devId, baud, parity, stop);
 
     newObj->devId = devId;
 
@@ -91,19 +91,20 @@ ModbusDev_Connect(ModbusDev* me) {
     return ModbusDevRTU_Connect(me->ctx);
 }
 
-// Read single register
+// Read status/register
 bool 
-ModbusDev_ReadSingleRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadSingleRegister(me->ctx, regAddr, dst);
+ModbusDev_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount) {
+    return ModbusDevRTU_ReadRegister(me->ctx, regAddr, funcCode, dst, regCount);
 }
 
+// Write 2byte
 bool
-ModbusDev_ReadSingleInputRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadSingleInputRegister(me->ctx, regAddr, dst);
+ModbusDev_WriteRegister(ModbusDev* me, int regAddr, int funcCode, uint16_t value) {
+    return ModbusDevRTU_WriteRegister(me->ctx, regAddr, funcCode, value);
 }
 
-// Write single register
+// Get RTApp Version
 bool
-ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value) {
-    return ModbusDevRTU_WriteSingleRegister(me->ctx, regAddr, value);
+ModbusDev_GetRTAppVersion(char* rtAppVersion) {
+    return ModbusDevRTU_GetRTAppVersion(rtAppVersion);
 }

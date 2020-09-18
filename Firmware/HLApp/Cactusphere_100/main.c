@@ -88,6 +88,7 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 #include "TelemetryItems.h"
 #include "PropertyItems.h"
 
+#include "cactusphere_product.h"
 #include "cactusphere_eeprom.h"
 #include "cactusphere_error.h"
 
@@ -101,12 +102,13 @@ static volatile sig_atomic_t exitCode = ExitCode_Success;
 
 #if (APP_PRODUCT_ID == PRODUCT_ATMARK_TECHNO_RS485)
 #define USE_MODBUS
-#define USE_MODBUS_TCP
 #endif // PRODUCT_ATMARK_TECHNO_RS485
 
 #ifdef USE_MODBUS
 #include "ModbusConfigMgr.h"
 #include "ModbusFetchConfig.h"
+#include "LibModbus.h"
+#include "ModbusDataFetchScheduler.h"
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -135,6 +137,7 @@ static char scopeId[SCOPEID_LENGTH]; // ScopeId for the Azure IoT Central applic
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
 static bool iothubAuthenticated = false;
+static bool iothubFirstConnected = false;
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback);
@@ -469,6 +472,12 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
     Log_Debug("IoT Hub Authenticated: %s\n", GetReasonString(reason));
 
     if (reason == IOTHUB_CLIENT_CONNECTION_OK) {
+        if(!iothubFirstConnected) {
+            cactusphere_error_notify(FIRST_CONNECT_IOTC);
+            iothubFirstConnected = true;
+        } else {
+            cactusphere_error_notify(RE_CONNECT_IOTC);
+        }
 
         int ret;
         Log_Debug("Getting EEPROM information.\n");
@@ -489,8 +498,10 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             // RTApp
             char rtAppVersion[256] = { 0 };
             bool ret = false;
-#ifdef USE_DI
+#if defined USE_DI
             ret = DI_Lib_ReadRTAppVersion(rtAppVersion);
+#elif defined USE_MODBUS
+            ret = Libmodbus_GetRTAppVersion(rtAppVersion);
 #endif
             if (ret) {
                 snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate, "RTAppVersion", rtAppVersion);
@@ -603,6 +614,64 @@ static void SetupAzureClient(void)
 }
 
 /// <summary>
+///    Send property response.
+/// </summary>
+#define JSON_FORMAT_NUM 50
+static void SendPropertyResponse(vector Send_PropertyItem)
+{
+    static const char* EventMsgTemplate_bool = "{ \"%s\": %s }";
+    static const char* EventMsgTemplate_num  = "{ \"%s\": %u }";
+    static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
+    char* propertyStr = NULL;
+    size_t propertyStr_len = 0;
+    
+    if (! vector_is_empty(Send_PropertyItem)) {
+        ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
+        for (int i = 0; i < vector_size(Send_PropertyItem); i++){
+            switch (curs->type)
+            {
+            case TYPE_BOOL:
+                propertyStr_len = strlen(curs->propertyName) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if (propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, propertyStr_len, EventMsgTemplate_bool,
+                             curs->propertyName, (curs->value.b ? "true" : "false"));
+                }
+                break;
+            case TYPE_NUM:
+                propertyStr_len = strlen(curs->propertyName) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if (propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, propertyStr_len, EventMsgTemplate_num,
+                             curs->propertyName, curs->value.ul);
+                }
+                break;
+            case TYPE_STR:
+                propertyStr_len = strlen(curs->propertyName) + strlen(curs->value.str) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if(propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, strlen(curs->propertyName)+strlen(curs->value.str) + JSON_FORMAT_NUM, EventMsgTemplate_str,
+                             curs->propertyName, curs->value.str);
+                }
+                free(curs->value.str);
+                break;
+            default:
+                continue;
+            }
+            if (propertyStr) {
+                IoT_CentralLib_SendProperty(propertyStr);
+                free(propertyStr);
+                propertyStr = NULL;
+            }
+            curs++;
+        }
+    }
+}
+
+/// <summary>
 ///     Callback invoked when a Device Twin update is received from IoT Hub.
 ///     Updates local state for 'showEvents' (bool).
 /// </summary>
@@ -615,11 +684,41 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         return;
     }
 
+    vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
+
 #ifdef USE_MODBUS
-    ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize);
-    DataFetchScheduler_Init(
-        mTelemetrySchedulerArr[MODBUS_RTU],
-        ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
+    SphereWarning err = ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    switch (err)
+    {
+    case NO_ERROR:
+    case ILLEGAL_PROPERTY:
+        DataFetchScheduler_Init(
+            mTelemetrySchedulerArr[MODBUS_RTU],
+            ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
+        
+        if (err == NO_ERROR) {
+            gLedState = LED_ON;
+        } else { // ILLEGAL_PROPERTY
+            // do not set ct_error and exitCode,
+            // as it won't hang with this error.
+            Log_Debug("ERROR: Receive illegal property.\n");
+            gLedState = LED_BLINK;
+            cactusphere_error_notify(err);
+        }
+        break;
+    case ILLEGAL_DESIRED_PROPERTY:
+        Log_Debug("ERROR: Receive illegal desired property.\n");
+        ct_error = -(int)err;
+        break;
+    case UNSUPPORTED_PROPERTY:
+        Log_Debug("ERROR: Receive unsupported property.\n");
+        ct_error = -(int)err;
+        break;
+
+    default:
+        break;
+    }
+    SendPropertyResponse(Send_PropertyItem);
 #endif  // USE_MODBUS
 
 #ifdef USE_MODBUS_TCP
@@ -630,8 +729,6 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 #endif // USE_MODBUS_TCP
 
 #ifdef USE_DI
-    vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
-
     SphereWarning err = DI_ConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
     switch (err)
     {
@@ -641,22 +738,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
             mTelemetrySchedulerArr[DIGITAL_IN],
             DI_FetchConfig_GetFetchItemPtrs(DI_ConfigMgr_GetFetchConfig()),
             DI_WatchConfig_GetFetchItems(DI_ConfigMgr_GetWatchConfig()));
-
-        static const char* EventMsgTemplate_b = "{ \"%s\": %s }";
-        static const char* EventMsgTemplate_d = "{ \"%s\": %u }";
-        static char propertyStr[100] = { 0 };
-        if (! vector_is_empty(Send_PropertyItem)) {
-            ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
-            for (int i = 0; i < vector_size(Send_PropertyItem); i++){
-                if (curs->isbool) {
-                    snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate_b, curs->propertyName, (curs->value.b ? "true" : "false"));
-                } else {
-                    snprintf(propertyStr, sizeof(propertyStr), EventMsgTemplate_d, curs->propertyName, curs->value.ul);
-                }
-                IoT_CentralLib_SendProperty(propertyStr);
-                curs++;
-            }
-        }
+        SendPropertyResponse(Send_PropertyItem);
 
         if (err == NO_ERROR) {
             gLedState = LED_ON;
@@ -681,15 +763,15 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         break;
     }
 
+#endif  // USE_DI
+    vector_destroy(Send_PropertyItem);
+
     if (ct_error < 0) {
         // hang
         gLedState = LED_BLINK;
         cactusphere_error_notify(err);
         exitCode = ExitCode_TermHandler_SigTerm;
     }
-
-    vector_destroy(Send_PropertyItem);
-#endif  // USE_DI
 }
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
@@ -699,10 +781,25 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         goto end;
     }
 
-#ifdef USE_DI
     char deviceMethodResponse[100];
     char reportedPropertiesString[100];
 
+#ifdef USE_MODBUS
+    static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
+
+    ModbusOneshotcommand(payload, size, deviceMethodResponse);
+    
+    // send result
+    *response_size = strlen(deviceMethodResponse);
+    *response = malloc(*response_size);
+    if (NULL != response) {
+        (void)memcpy(*response, deviceMethodResponse, *response_size);
+    }
+    snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
+    IoT_CentralLib_SendProperty(reportedPropertiesString);
+#endif
+    
+#ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
     static const char* ReportMsgTemplate = "{ \"ClearCounterResult_DI%d\": \"%s\" }";
@@ -722,6 +819,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
             uint64_t initVal = strtoull(cmdPayload, NULL, 10);
             
             if (initVal > 0x7FFFFFFF) {
+                free(cmdPayload);
                 goto err_value;
             }
             if (!DI_Lib_ResetPulseCount((unsigned long)pinId, (unsigned long)initVal)) {

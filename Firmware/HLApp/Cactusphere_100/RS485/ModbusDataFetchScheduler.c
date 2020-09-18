@@ -22,13 +22,18 @@
  * THE SOFTWARE.
  */
 
+#include <string.h>
+
 #include "ModbusDataFetchScheduler.h"
 
 #include "LibModbus.h"
 #include "ModbusFetchItem.h"
 #include "ModbusFetchTargets.h"
+#include "ModbusDevConfig.h"
 #include "StringBuf.h"
 #include "TelemetryItems.h"
+
+#define  MODBUS_ONESHOT_COMMAND_PARAM_NUM 4
 
 typedef struct ModbusDataFetchScheduler {
     DataFetchSchedulerBase	Super;
@@ -92,16 +97,22 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
 
             for (int j = 0, m = vector_size(fetchItems); j < m; ++j) {
                 const ModbusFetchItem* item = *fiCurs++;
-                unsigned short value;
+                unsigned short readVal[2] = { 0 };
 
-                if (!Libmodbus_ReadRegister(modbusdev, (int)item->regAddr, &value)) {
+                if (!Libmodbus_ReadRegister(modbusdev, (int)item->regAddr, (int)item->funcCode, readVal, (int)item->regCount)) {
                     // error!
                     continue;
                 }
 
-                if (item->asFloat)
-                {
-                    double fVal = value;
+                unsigned long tmpVal  = 0;
+                if (item->regCount == 2) {
+                    tmpVal = (unsigned long)((readVal[0] << 16) + readVal[1]);
+                } else {
+                    tmpVal = readVal[0];
+                }
+
+                if (item->asFloat) {
+                    double fVal = tmpVal;
 
                     fVal += item->offset;
                     if (item->multiplier != 0) {
@@ -111,10 +122,8 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
                         fVal /= item->devider;
                     }
                     StringBuf_AppendByPrintf(me->mStringBuf, "%f", fVal);
-                }
-                else
-                {
-                    unsigned long ulVal = value;
+                } else {
+                    unsigned long ulVal = tmpVal;
 
                     ulVal += item->offset;
                     if (item->multiplier != 0) {
@@ -133,6 +142,81 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
             }
         }
     }
+}
+
+void ModbusOneshotcommand(const unsigned char* payload, size_t size, char* response) {
+    const char DevIDkey[]           = "devID";
+    const char RegisterAddrKey[]    = "registerAddr";
+    const char FuncCodeKey[]        = "funcCode";
+    const char DataKey[]            = "data";
+
+    uint32_t devID = 0;
+    uint32_t regAddr = 0;
+    uint32_t funcCode = 0;
+    uint16_t data = 0;
+
+    json_value* jsonObj = json_parse(payload, size);
+    json_value* configItem = json_parse(jsonObj->u.string.ptr, jsonObj->u.string.length);
+    if (!configItem || configItem->u.object.length != MODBUS_ONESHOT_COMMAND_PARAM_NUM) {
+        strcpy(response, "\"Illegal config\"");
+        return;
+    }
+
+    for (unsigned int i = 0, n = configItem->u.object.length; i < n; ++i) {
+        if (0 == strcmp(configItem->u.object.values[i].name, DevIDkey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            bool ret = json_GetNumericValue(item, &devID, 16);
+            if (!ret || devID == 0) {
+                strcpy(response, "\"Illegal devID\"");
+                return;
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, RegisterAddrKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            bool ret = json_GetNumericValue(item, &regAddr, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal regAddr\"");
+                return;
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, FuncCodeKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            bool ret = json_GetNumericValue(item, &funcCode, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal funcCode\"");
+                return;
+            }
+        } else if (0 == strcmp(configItem->u.object.values[i].name, DataKey)) {
+            json_value* item = configItem->u.object.values[i].value;
+            uint32_t value;
+            bool ret = json_GetNumericValue(item, &value, 16);
+            if (!ret) {
+                strcpy(response, "\"Illegal data\"");
+                return;
+            } else {
+                data = (uint16_t)value;
+            }
+        }
+    }
+
+    // funcCode check
+    if ((funcCode != FC_WRITE_FORCE_SINGLE_COIL) &&
+        (funcCode != FC_WRITE_SINGLE_REGISTER)) {
+        strcpy(response, "\"Illegal funcCode\"");
+        return;
+    }
+
+    ModbusDev* modbusdev = Libmodbus_GetAndConnectLib((int)devID);
+    if (modbusdev == NULL) {
+        strcpy(response, "\"Illegal devID\"");
+        return;
+    }
+
+    if (Libmodbus_WriteRegister(modbusdev, (int)regAddr, (int)funcCode, &data)) {
+        strcpy(response, "\"Success\"");
+    } else {
+        strcpy(response, "\"Error\"");
+    }
+
+    return;
 }
 
 DataFetchScheduler*

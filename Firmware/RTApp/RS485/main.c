@@ -42,6 +42,9 @@
 
 const int TIMEOUT = 400; // 400[ms]
 
+#define OK  1
+#define NG  -1
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -56,6 +59,12 @@ typedef unsigned int u32;
 #define UART_FRACDIV_L			(0x54)
 #define UART_FRACDIV_M			(0x58)
 #define UART_LCR_DLAB			(1 << 7)
+#define UART_LCR_SB      		(1 << 6)
+#define UART_LCR_SP 	    	(1 << 5)
+#define UART_LCR_EPS_SHIFT		(4)
+#define UART_LCR_PEN    		(1 << 3)
+#define UART_LCR_STB_SHIFT		(2)
+#define UART_LCR_WLS_SHIFT		(0)
 
 #define RX_BUFFER_SIZE 8
 
@@ -63,7 +72,8 @@ extern uint32_t StackTop; // &StackTop == end of TCM
 
 static _Noreturn void DefaultExceptionHandler(void);
 
-static const uintptr_t UART_BASE = 0x38080500;
+// ISU3 UART Base Address
+static const uintptr_t UART_BASE = 0x380a0500;
 
 
 static
@@ -82,9 +92,9 @@ void Uart_Init(void)
 }
 
 static
-void mtk_hdl_uart_set_baudrate(u32 baudrate)
+void mtk_hdl_uart_set_params(u32 baudrate, u8 parity, u8 stop)
 {
-    u8 uart_lcr, fraction;
+    u8 uart_lcr, fraction, word_length;
     u32 data, high_speed_div, sample_count, sample_point;
     u8 fraction_L_mapping[] = { 0x00, 0x10, 0x44, 0x92, 0x59,
             0xab, 0xb7, 0xdf, 0xff, 0xff, 0xff };
@@ -97,6 +107,18 @@ void mtk_hdl_uart_set_baudrate(u32 baudrate)
 
     /* High speed mode */
     WriteReg32(UART_BASE, UART_RATE_STEP, 0x03);
+
+    /* Set parity and stop bit */
+    uart_lcr = ReadReg32(UART_BASE, UART_LCR);
+    word_length = stop - 1;
+    if(parity) {
+        uart_lcr = uart_lcr | ((parity -1 ) << UART_LCR_EPS_SHIFT)
+                    | UART_LCR_PEN;
+        word_length += 1;
+    }
+    uart_lcr = uart_lcr | ((stop - 1) << UART_LCR_STB_SHIFT)
+                | word_length << UART_LCR_WLS_SHIFT;
+    WriteReg32(UART_BASE, UART_LCR, uart_lcr);
 
     /* DLAB start */
     uart_lcr = ReadReg32(UART_BASE, UART_LCR);
@@ -259,17 +281,17 @@ RTCoreMain(void)
     }
 
     // GPIO setting
-    static const GpioBlock isu2 = {
-    .baseAddr = 0x38090000,.type = GpioBlock_ISU,.firstPin = 36,.pinCount = 5 };
-    Mt3620_Gpio_AddBlock(&isu2);
+    static const GpioBlock grp5 = {
+    .baseAddr = 0x38060000,.type = GpioBlock_GRP,.firstPin = 20,.pinCount = 4 };
+    Mt3620_Gpio_AddBlock(&grp5);
 
     // setting up RS-485 receive mode
         // DE (disable)
-    Mt3620_Gpio_ConfigurePinForOutput(37);
-    Mt3620_Gpio_Write(37, false);
+    Mt3620_Gpio_ConfigurePinForOutput(21);
+    Mt3620_Gpio_Write(21, false);
         // RE_N (enable)
-    Mt3620_Gpio_ConfigurePinForOutput(38);
-    Mt3620_Gpio_Write(38, false);
+    Mt3620_Gpio_ConfigurePinForOutput(23);
+    Mt3620_Gpio_Write(23, false);
 
     // main loop
     for (;;) {
@@ -277,20 +299,22 @@ RTCoreMain(void)
         const UART_DriverMsg* msg = InterCoreComm_WaitAndRecvRequest();
 
         if (msg != NULL) {
+            UART_ReturnMsg    retMsg;
+
             switch (msg->header.requestCode) {
             case UART_REQ_WRITE_AND_READ:
                 if (initializeUart) {
                     Uart_DataSkip();  // read out unknown received data
 
                     // send request to the opposing device via RS-485
-                    Mt3620_Gpio_Write(37, true);  // DE (enable)
-                    Mt3620_Gpio_Write(38, true);  // RE_N (disable)
+                    Mt3620_Gpio_Write(21, true);  // DE (enable)
+                    Mt3620_Gpio_Write(23, true);  // RE_N (disable)
                     Uart_WritePoll((const char*)msg->body.writeAndReadReq.writeData,
                         msg->body.writeAndReadReq.writeLen);
 
                     // receive response from the opposing device
-                    Mt3620_Gpio_Write(37, false);
-                    Mt3620_Gpio_Write(38, false);
+                    Mt3620_Gpio_Write(21, false);
+                    Mt3620_Gpio_Write(23, false);
 
                     // send back the response to HLApp
                     if (! Uart_ReadPoll(rxBuffer, msg->body.writeAndReadReq.readLen)) {
@@ -312,10 +336,20 @@ RTCoreMain(void)
                 // status code is
                 //   0: error, 1: OK
                 Uart_Init();
-                mtk_hdl_uart_set_baudrate(msg->body.setParams.baudRate);
+                mtk_hdl_uart_set_params(msg->body.setParams.baudRate,
+                    msg->body.setParams.parity, msg->body.setParams.stop);
                 initializeUart = true;
                 if (! InterCoreComm_SendIntValue(1)) {
 //                    int i = 0;
+                }
+                break;
+            case UART_REQ_VERSION:
+                memset(retMsg.message.version, 0x00, sizeof(retMsg.message.version));
+                strncpy(retMsg.message.version, RTAPP_VERSION, strlen(RTAPP_VERSION) + 1);
+                retMsg.returnCode = OK;
+                retMsg.messageLen = strlen(RTAPP_VERSION);
+                if (InterCoreComm_SendReadData((uint8_t*)&retMsg, sizeof(UART_ReturnMsg))) {
+                    ;
                 }
                 break;
             default:

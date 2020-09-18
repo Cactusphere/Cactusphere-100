@@ -93,6 +93,11 @@ InterCoreComm_WaitAndRecvRequest()
             return NULL;  // invalid length
         }
         break;
+    case UART_REQ_VERSION:
+        if (msgHdr->messageLen != 0) {
+            return NULL;  // invalid length
+        }
+        break;
     default:
         return NULL;  // unknown messagse
     }

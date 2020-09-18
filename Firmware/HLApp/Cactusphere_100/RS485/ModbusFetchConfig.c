@@ -29,6 +29,7 @@
 
 #include "json.h"
 #include "ModbusFetchItem.h"
+#include "ModbusDevConfig.h"
 #include "TelemetryItems.h"
 
 struct ModbusFetchConfig {
@@ -39,13 +40,22 @@ struct ModbusFetchConfig {
 
 // key Items
 const char ModbusTelemetryConfigKey[]   = "ModbusTelemetryConfig";
-const char DevIDKey[]                   = "devID";				
-const char RegisterAddrKey[]            = "registerAddr";	
-const char OffsetKey[]                  = "offset";				
-const char IntervalKey[]                = "interval";		
-const char MultiplylKey[]               = "multiply";			
-const char DeviderKey[]                 = "devider";			
-const char AsFloatKey[]                 = "asFloat";			
+const char DevIDKey[]                   = "devID";
+const char RegisterAddrKey[]            = "registerAddr";
+const char RegisterCountKey[]           = "registerCount";
+const char FuncCodeKey[]                = "funcCode";
+const char OffsetKey[]                  = "offset";
+const char IntervalKey[]                = "interval";
+const char MultiplylKey[]               = "multiply";
+const char DeviderKey[]                 = "devider";
+const char AsFloatKey[]                 = "asFloat";
+
+#define SET_TELEMETRYCONF_DEVID    0x01
+#define SET_TELEMETRYCONF_REGADDR  0x02
+#define SET_TELEMETRYCONF_REGCNT   0x04
+#define SET_TELEMETRYCONF_FUNCCODE 0x08
+#define SET_TELEMETRYCONF_INTERVAL 0x10
+#define SET_TELEMETRYCONF_REQUIRED 0x1F
 
 // Initialization and cleanup
 ModbusFetchConfig*
@@ -86,6 +96,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     const json_value* json, const char* version)
 {
     json_value* configJson = NULL;
+    bool ret = true;
 
     // clean up old configuration and load new content
     if (0 != vector_size(me->mFetchItems)) {
@@ -106,11 +117,13 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
     }
 
     if (configJson == NULL) {
-        return false;
+        ret = false;
+        goto end;
     }
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         ModbusFetchItem pseudo;
+        int setFlag = 0;
         json_value* configItem = configJson->u.object.values[i].value;
         size_t	strLen = strlen(configJson->u.object.values[i].name);
 
@@ -122,6 +135,8 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
 
         pseudo.devID = 0;
         pseudo.regAddr = 0;
+        pseudo.regCount = 0;
+        pseudo.funcCode = 0;
         pseudo.offset = 0;
         pseudo.intervalSec = 1;
         pseudo.multiplier = 0;
@@ -131,54 +146,79 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
             if (0 == strcmp(configItem->u.object.values[p].name, DevIDKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
-                if (item->type == json_integer) {
-                    pseudo.devID = (unsigned long)item->u.integer;
+                bool ret_parse = json_GetNumericValue(item, &pseudo.devID, 16);
+                if (!ret_parse || pseudo.devID == 0) {
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_DEVID;
                 }
-                else if (item->type == json_string) {
-                    char *e;
-                    pseudo.devID = (unsigned long)strtol(item->u.string.ptr, &e, 16);
+            } else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                bool ret_parse = json_GetNumericValue(item, &pseudo.regAddr, 16);
+                if (!ret_parse) {
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_REGADDR;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, RegisterAddrKey)) {
-                char *e;
+            } else if (0 == strcmp(configItem->u.object.values[p].name, RegisterCountKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
-                pseudo.regAddr = (unsigned long)strtol(item->u.string.ptr, &e, 16);
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
-                json_value* item = configItem->u.object.values[p].value;
-
-                pseudo.intervalSec = (unsigned long)item->u.integer;
-                if (pseudo.intervalSec <= 0) {
-                    pseudo.intervalSec = 1;
+                bool ret_parse = json_GetNumericValue(item, &pseudo.regCount, 16);
+                if (!ret_parse || pseudo.regCount < 1 || pseudo.regCount > 2) {
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_REGCNT;
                 }
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
+            } else if (0 == strcmp(configItem->u.object.values[p].name, FuncCodeKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
-                pseudo.offset = (unsigned short)item->u.integer;
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, MultiplylKey)) {
+                bool ret_parse = json_GetNumericValue(item, &pseudo.funcCode, 16);
+                if (!ret_parse) {
+                    ret = false;
+                } else {
+                    switch (pseudo.funcCode)
+                    {
+                    case FC_READ_HOLDING_REGISTER:
+                    case FC_READ_INPUT_REGISTERS:
+                        setFlag += SET_TELEMETRYCONF_FUNCCODE;
+                        break;
+                    default:
+                        ret = false;
+                        break;
+                    }
+                }
+            } else if (0 == strcmp(configItem->u.object.values[p].name, IntervalKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
-                pseudo.multiplier = (unsigned long)item->u.integer;
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, DeviderKey)) {
+                bool ret_parse = json_GetNumericValue(item, &pseudo.intervalSec, 10);
+                if (!ret_parse || pseudo.intervalSec < 1 || pseudo.intervalSec > 86400) {
+                    ret = false;
+                } else {
+                    setFlag += SET_TELEMETRYCONF_INTERVAL;
+                }
+            } else if (0 == strcmp(configItem->u.object.values[p].name, OffsetKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
-                pseudo.devider = (unsigned long)item->u.integer;
-            }
-            else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
+                uint32_t value;
+                if (json_GetNumericValue(item, &value, 10)) {
+                    pseudo.offset = (uint16_t)value;
+                }
+            } else if (0 == strcmp(configItem->u.object.values[p].name, MultiplylKey)) {
                 json_value* item = configItem->u.object.values[p].value;
-
+                json_GetNumericValue(item, &pseudo.multiplier, 10);
+            } else if (0 == strcmp(configItem->u.object.values[p].name, DeviderKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                json_GetNumericValue(item, &pseudo.devider, 10);
+            } else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
+                json_value* item = configItem->u.object.values[p].value;
                 pseudo.asFloat = item->u.boolean;
             }
-
         }
-        vector_add_last(me->mFetchItems, &pseudo);
+        
+        if (setFlag == SET_TELEMETRYCONF_REQUIRED) {
+            vector_add_last(me->mFetchItems, &pseudo);
+        } else {
+            ret = false;
+        }
     }
 
+    // add new configuration
     if (! vector_is_empty(me->mFetchItems)) {
         ModbusFetchItem* curs = (ModbusFetchItem*)vector_get_data(me->mFetchItems);
 
@@ -187,10 +227,10 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             TelemetryItems_AddDictionaryElem(curs->telemetryName, curs->asFloat);
             ++curs;
         }
-
-        return true;
     }
-    return false;
+
+end:
+    return ret;
 }
 
 // Get configuration

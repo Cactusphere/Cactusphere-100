@@ -132,7 +132,7 @@ DI_WatchConfig_LoadFromJSON(DI_WatchConfig* me,
             }
             overWrite[pinid] = (bool)item->u.object.values[0].value->u.boolean;
             sprintf(config[pinid].telemetryName, "DI%d_EdgeEvent", pinid + DI_WATCH_PORT_OFFSET);
-            PropertyItems_AddItem(propertyItem, propertyName, true, overWrite[pinid]);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, overWrite[pinid]);
         } else if(0 == strncmp(propertyName, EdgeNotifyIsHighDIKey, notifyHighDiLen)) {
             pinid = strtol(&propertyName[notifyHighDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -143,7 +143,7 @@ DI_WatchConfig_LoadFromJSON(DI_WatchConfig* me,
                 config[pinid].isCountClear = true;
             }
             config[pinid].notifyChangeForHigh = (bool)item->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, propertyName, true, config[pinid].notifyChangeForHigh);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, config[pinid].notifyChangeForHigh);
         }
     }
 

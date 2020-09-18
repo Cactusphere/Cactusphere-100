@@ -23,7 +23,7 @@
  */
 
 #include "Factory.h"
-#include "cactusphere_eeprom.h"
+#include "cactusphere_product.h"
 
 #if (APP_PRODUCT_ID == PRODUCT_ATMARK_TECHNO_DIN)
 #include "DI_DataFetchScheduler.h"
@@ -32,9 +32,7 @@
 #endif
 #if (APP_PRODUCT_ID == PRODUCT_ATMARK_TECHNO_RS485)
 #include "ModbusDataFetchScheduler.h"
-#include "ModbusTcpDataFetchScheduler.h"
 #define USE_MODBUS
-#define USE_MODBUS_TCP
 #endif
 
 DataFetchSchedulerBase*
@@ -43,10 +41,12 @@ Factory_CreateScheduler(IO_Feature feature)
     DataFetchSchedulerBase* newObj = NULL;
 
     switch (feature) {
-#if defined(USE_MODBUS) || defined(USE_MODBUS_TCP)
+#ifdef USE_MODBUS
     case MODBUS_RTU:
         newObj = ModbusDataFetchScheduler_New();
         break;
+#endif
+#ifdef USE_MODBUS_TCP
     case MODBUS_TCP:
         newObj = ModbusTcpDataFetchScheduler_New();
         break;
@@ -70,8 +70,12 @@ Factory_CreateFetchTimers(IO_Feature feature,
     FetchTimers*	newObj = NULL;
 
     switch (feature) {
-#if defined(USE_MODBUS) || defined(USE_MODBUS_TCP)
+#ifdef USE_MODBUS
     case MODBUS_RTU:
+        newObj = FetchTimers_New(cbProc, cbArg);
+        break;
+#endif
+#ifdef USE_MODBUS_TCP
     case MODBUS_TCP:
         newObj = FetchTimers_New(cbProc, cbArg);
         break;

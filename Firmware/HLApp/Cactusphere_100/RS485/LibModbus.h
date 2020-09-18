@@ -44,7 +44,10 @@ extern bool Libmodbus_LoadFromJSON(const json_value* json);
 extern ModbusDev* Libmodbus_GetAndConnectLib(int devID);
 
 // Read/Write register
-extern bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst);
-extern bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data);
+extern bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount);
+extern bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* data);
+
+// Get RTApp Version
+extern bool Libmodbus_GetRTAppVersion(char* rtAppVersion);
 
 #endif  // _LIBMODBUS_H_

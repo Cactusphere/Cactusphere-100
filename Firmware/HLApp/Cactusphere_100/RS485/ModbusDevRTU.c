@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "ModbusDevRTU.h"
+#include "ModbusDevConfig.h"
 #include "UartDriveMsg.h"
 #include "SendRTApp.h"
 #include "vector.h"
@@ -44,17 +45,14 @@
 
 #define MODBUS_RTU_PRESET_REQ_LENGTH 6
 
-// function
-#define FC_READ_HOLDING_REGISTER 0x03
-#define FC_READ_INPUT_REGISTERS 0x04
-#define FC_WRITE_SINGLE_REGISTER 0x06
-
 // ModbusCtx structure
 typedef struct ModbusCtx {
-    int devId;
-    int baud;
-    int header_length;
-    int checksum_length;
+    int     devId;
+    int     baud;
+    uint8_t parity;
+    uint8_t stop;
+    int     header_length;
+    int     checksum_length;
 }ModbusCtx;
 
 static uint16_t 
@@ -131,15 +129,15 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     return rc;
 }
 
-static bool
-ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst) {
+// Read register
+bool
+ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length) {
     int rc;
     int req_length;
     uint8_t req[MIN_REQ_LENGTH];
     uint8_t rsp[MAX_MESSAGE_LENGTH];
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
-    int length = 1;
 
     req_length = ModbusRTU_CreateRequestMsg(me, function, regAddr, length, req);
 
@@ -179,13 +177,15 @@ ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned sho
 
 // Initialization and cleanup
 ModbusCtx* 
-ModbusDevRTU_Initialize(int devId, int baud) {
+ModbusDevRTU_Initialize(int devId, int baud, uint8_t parity, uint8_t stop) {
     ModbusCtx* newObj;
 
     newObj = (ModbusCtx*)malloc(sizeof(ModbusCtx));
 
     newObj->devId = devId;
     newObj->baud = baud;
+    newObj->parity = parity;
+    newObj->stop = stop;
 
     newObj->header_length = MODBUS_RTU_HEADER_LENGTH;
     newObj->checksum_length = MODBUS_RTU_CHECKSUM_LENGTH;
@@ -209,6 +209,8 @@ ModbusDevRTU_Connect(ModbusCtx* me) {
     msg->header.requestCode = UART_REQ_SET_PARAMS;
     msg->header.messageLen = sizeof(UART_MsgSetParams);
     msg->body.setParams.baudRate = (uint32_t)me->baud;
+    msg->body.setParams.parity = (uint8_t)me->parity;
+    msg->body.setParams.stop = (uint8_t)me->stop;
     msgSize = (int)(sizeof(msg->header) + msg->header.messageLen);
 
     SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, (long)msgSize, &readMessage, sizeof(readMessage));
@@ -218,21 +220,9 @@ ModbusDevRTU_Connect(ModbusCtx* me) {
     return true;
 }
 
-// Read single register
-bool 
-ModbusDevRTU_ReadSingleRegister(ModbusCtx* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadRegister(me, regAddr, FC_READ_HOLDING_REGISTER, dst);
-}
-
+// Write 2byte
 bool
-ModbusDevRTU_ReadSingleInputRegister(ModbusCtx* me, int regAddr, unsigned short* dst) {
-    return ModbusDevRTU_ReadRegister(me, regAddr, FC_READ_INPUT_REGISTERS, dst);
-}
-
-// Write single register
-bool
-ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short value) {
-    int function = FC_WRITE_SINGLE_REGISTER;
+ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value) {
     int rc;
     int req_length;
     uint8_t req[MIN_REQ_LENGTH];
@@ -240,7 +230,7 @@ ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short valu
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
 
-    req_length = ModbusRTU_CreateRequestMsg(me, function, regAddr, (int)value, req);
+    req_length = ModbusRTU_CreateRequestMsg(me, funcCode, regAddr, (int)value, req);
 
     msg->header.requestCode = UART_REQ_WRITE_AND_READ;
 
@@ -262,4 +252,25 @@ ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short valu
             return false;
     }
     return rc;
+}
+
+// Get RTApp Version
+bool
+ModbusDevRTU_GetRTAppVersion(char* rtAppVersion) {
+    unsigned char sendMessage[256];
+    unsigned char readMessage[272];
+    UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
+    UART_ReturnMsg* retMsg = (UART_ReturnMsg*)readMessage;
+    int msgSize;
+    bool ret = false;
+
+    memset(msg, 0, sizeof(UART_DriverMsg));
+    msg->header.requestCode = UART_REQ_VERSION;
+    msg->header.messageLen = 0;
+    msgSize = (int)(sizeof(msg->header) + msg->header.messageLen);
+    ret = SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, msgSize,
+        (unsigned char*)retMsg, sizeof(UART_ReturnMsg));
+    strncpy(rtAppVersion, retMsg->message.version, retMsg->messageLen);
+
+    return ret;
 }

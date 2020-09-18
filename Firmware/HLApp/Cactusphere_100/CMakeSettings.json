@@ -6,7 +6,7 @@
   ],
   "configurations": [
     {
-      "name": "ARM-Debug",
+      "name": "AtmarkTechno_DI_Debug",
       "generator": "Ninja",
       "configurationType": "Debug",
       "inheritEnvironments": [
@@ -15,6 +15,7 @@
       "buildRoot": "${projectDir}\\out\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeToolchain": "${env.AzureSphereDefaultSDKDir}CMakeFiles\\AzureSphereToolchain.cmake",
+      "cmakeCommandArgs": "-DPRODUCT=\"atmarktechno_DI_model\"",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "variables": [
@@ -25,7 +26,7 @@
       ]
     },
     {
-      "name": "ARM-Release",
+      "name": "AtmarkTechno_DI_Release",
       "generator": "Ninja",
       "configurationType": "Release",
       "inheritEnvironments": [
@@ -34,6 +35,47 @@
       "buildRoot": "${projectDir}\\out\\${name}",
       "installRoot": "${projectDir}\\install\\${name}",
       "cmakeToolchain": "${env.AzureSphereDefaultSDKDir}CMakeFiles\\AzureSphereToolchain.cmake",
+      "cmakeCommandArgs": "-DPRODUCT=\"atmarktechno_DI_model\"",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "AZURE_SPHERE_TARGET_API_SET",
+          "value": "latest-lts"
+        }
+      ]
+    },
+    {
+      "name": "AtmarkTechno_RS485_Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [
+        "AzureSphere"
+      ],
+      "buildRoot": "${projectDir}\\out\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeToolchain": "${env.AzureSphereDefaultSDKDir}CMakeFiles\\AzureSphereToolchain.cmake",
+      "cmakeCommandArgs": "-DPRODUCT=\"atmarktechno_RS485_model\"",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "AZURE_SPHERE_TARGET_API_SET",
+          "value": "latest-lts"
+        }
+      ]
+    },
+    {
+      "name": "AtmarkTechno_RS485_Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "inheritEnvironments": [
+        "AzureSphere"
+      ],
+      "buildRoot": "${projectDir}\\out\\${name}",
+      "installRoot": "${projectDir}\\install\\${name}",
+      "cmakeToolchain": "${env.AzureSphereDefaultSDKDir}CMakeFiles\\AzureSphereToolchain.cmake",
+      "cmakeCommandArgs": "-DPRODUCT=\"atmarktechno_RS485_model\"",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "variables": [

@@ -26,22 +26,23 @@
 #define _MODBUS_DEV_RTU_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct ModbusCtx ModbusCtx;
 
 // Initialization and cleanup
-extern ModbusCtx* ModbusDevRTU_Initialize(int devId, int baud);
+extern ModbusCtx* ModbusDevRTU_Initialize(int devId, int baud, uint8_t parity, uint8_t stop);
 extern void ModbusDevRTU_Destroy(ModbusCtx* me);
 
 // Connect
 extern bool ModbusDevRTU_Connect(ModbusCtx* me);
 
-// Read 1byte holding register
-extern bool ModbusDevRTU_ReadSingleRegister(ModbusCtx* me, int regAddr, unsigned short* dst);
+// Read status/register
+extern bool ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length);
 
-// Read 1byte input register
-extern bool ModbusDevRTU_ReadSingleInputRegister(ModbusCtx* me, int regAddr, unsigned short* dst);
+// Write 2byte
+extern bool ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value);
 
-// Write 1byte
-extern bool ModbusDevRTU_WriteSingleRegister(ModbusCtx* me, int regAddr, unsigned short value);
+// Get RTApp Version
+extern bool ModbusDevRTU_GetRTAppVersion(char* rtAppVersion);
 #endif  // _MODBUS_DEV_RTU_H_

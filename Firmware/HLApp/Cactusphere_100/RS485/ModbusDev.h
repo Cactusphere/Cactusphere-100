@@ -37,7 +37,7 @@ extern vector ModbusDev_Initialize(void);
 extern void ModbusDev_Destroy(vector modbusDevVec);
 
 // Create Modbus RTU
-extern ModbusDev* ModbusDev_NewModbusRTU(int devId, int baud);
+extern ModbusDev* ModbusDev_NewModbusRTU(int devId, int baud, uint8_t parity, uint8_t stop);
 
 // Get ModbusDev*
 extern ModbusDev* ModbusDev_GetModbusDev(int devID, vector modbusDevVec);
@@ -45,12 +45,12 @@ extern ModbusDev* ModbusDev_GetModbusDev(int devID, vector modbusDevVec);
 // Connect
 extern bool ModbusDev_Connect(ModbusDev* me);
 
-// Read 1byte holding register 
-extern bool ModbusDev_ReadSingleRegister(ModbusDev* me, int regAddr, unsigned short* dst);
+// Read status/register
+extern bool ModbusDev_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount);
 
-// Read 1byte input register
-extern bool ModbusDev_ReadSingleInputRegister(ModbusDev* me, int regAddr, unsigned short* dst);
+// Write 2byte
+extern bool ModbusDev_WriteRegister(ModbusDev* me, int regAddr, int funcCode, uint16_t value);
 
-// Write 1byte
-extern bool ModbusDev_WriteSingleRegister(ModbusDev* me, int regAddr, uint16_t value);
+// Get RTApp Version
+extern bool ModbusDev_GetRTAppVersion(char* rtAppVersion);
 #endif  // _MODBUS_DEV_H_

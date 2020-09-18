@@ -34,18 +34,28 @@
 #include <stdlib.h>
 
 #include "ModbusDev.h"
+#include "ModbusDevConfig.h"
 
 #include "vector.h"
 
 const char ModbusDevConfigKey[] = "ModbusDevConfig";
-const char BoudrateKey[] = "boudrate";
+const char BaudrateKey[] = "baudrate";
+const char ParityBitKey[] = "parity";
+const char StopBitKey[] = "stop";
+
+#define MIN_BAUDRATE 1200
+#define MAX_BAUDRATE 125200
+
+static const char ModbusParityKey[PARITY_NUM][5] = {
+    "None", "Odd", "Even"
+};
 
 static vector sModbusVec = NULL;
 
 // Add ModbusDev 
-static void Libmodbus_AddModbusDev(int devID, int boud) {
+static void Libmodbus_AddModbusDev(int devID, int boud, uint8_t parity, uint8_t stop) {
     ModbusDev* modbusDev;
-    modbusDev = ModbusDev_NewModbusRTU(devID, boud);
+    modbusDev = ModbusDev_NewModbusRTU(devID, boud, parity, stop);
     vector_add_last(sModbusVec, modbusDev);
 }
 
@@ -73,6 +83,7 @@ void Libmodbus_ModbusDevClear(void) {
 // Regist
 bool Libmodbus_LoadFromJSON(const json_value* json) {
     json_value* configJson = NULL;
+    bool ret = true;
 
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusDevConfigKey, json->u.object.values[i].name)) {
@@ -82,41 +93,63 @@ bool Libmodbus_LoadFromJSON(const json_value* json) {
     }
 
     if (configJson == NULL) {
-        return false;
+        ret = false;
+        goto end;
     }
 
     for (unsigned int i = 0, n = configJson->u.object.length; i < n; ++i) {
         int devId;
-        int boudrate;
+        int baudrate = 0;
+        uint8_t parity = 0;
+        uint8_t stop = 1;
         char *e;
         json_value* configItem = configJson->u.object.values[i].value;
 
         devId = strtol(configJson->u.object.values[i].name, &e, 16);
 
         if (devId == 0) {
-            return false;
+            ret = false;
+            continue;
         }
 
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
-            if (0 == strcmp(configItem->u.object.values[p].name, BoudrateKey)) {
+            if (0 == strcmp(configItem->u.object.values[p].name, BaudrateKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
+
+                if (json_GetNumericValue(item, &value, 16)) {
+                    baudrate = (int)value;
+                }
+            } else if (0 == strcmp(configItem->u.object.values[p].name, ParityBitKey)) {
                 json_value* item = configItem->u.object.values[p].value;
 
-                if (item->type == json_integer) {
-                    boudrate = (int)item->u.integer;
+                for (uint8_t j = 0; j < PARITY_NUM; j++) {
+                    if (0 == strcmp(item->u.string.ptr, ModbusParityKey[j])) {
+                        parity = j;
+                        break;
+                    }
                 }
-                else if (item->type == json_string) {
-                    boudrate = strtol(item->u.string.ptr, &e, 16);
+            } else if (0 == strcmp(configItem->u.object.values[p].name, StopBitKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                uint32_t value;
+
+                if (json_GetNumericValue(item, &value, 16)) {
+                    if (value == STOPBITS_ONE || value == STOPBITS_TWO) {
+                        stop = (uint8_t)value;
+                    }
                 }
-                break;
             }
         }
-        if (boudrate == 0) {
-            return false;
+
+        if (baudrate < MIN_BAUDRATE || baudrate > MAX_BAUDRATE) {
+            ret = false;
+        } else {
+            Libmodbus_AddModbusDev(devId, baudrate, parity, stop);
         }
-        Libmodbus_AddModbusDev(devId, boudrate);
     }
 
-    return true;
+end:
+    return ret;
 }
 
 ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
@@ -133,9 +166,14 @@ ModbusDev* Libmodbus_GetAndConnectLib(int devID) {
     return modbusDevP;
 }
 
-bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, unsigned short* dst) {
-    return ModbusDev_ReadSingleRegister(me, regAddr, dst);
+bool Libmodbus_ReadRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* dst, int regCount) {
+    return ModbusDev_ReadRegister(me, regAddr, funcCode, dst, regCount);
 }
-bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, unsigned short* data) {
-    return ModbusDev_WriteSingleRegister(me, regAddr, *data);
+bool Libmodbus_WriteRegister(ModbusDev* me, int regAddr, int funcCode, unsigned short* data) {
+    return ModbusDev_WriteRegister(me, regAddr, funcCode, *data);
+}
+
+// Get RTApp Version
+bool Libmodbus_GetRTAppVersion(char* rtAppVersion) {
+    return ModbusDev_GetRTAppVersion(rtAppVersion);
 }
