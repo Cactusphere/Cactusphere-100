@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Copyright (c) 2020 Atmark Techno, Inc.
- * 
+ *
  * MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -364,7 +364,7 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
             DataFetchScheduler_Schedule(scheduler);
         }
     }
-    
+
 dowork:
     if (iothubAuthenticated) {
         IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
@@ -638,7 +638,7 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
     char* propertyStr = NULL;
     size_t propertyStr_len = 0;
-    
+
     if (! vector_is_empty(Send_PropertyItem)) {
         ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
         for (int i = 0; i < vector_size(Send_PropertyItem); i++){
@@ -693,7 +693,7 @@ static void SendPropertyResponse(vector Send_PropertyItem)
 /// <param name="payloadSize">size of the Device Twin JSON document</param>
 static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payload,
                          size_t payloadSize, void *userContextCallback)
-{   
+{
     if (ct_error < 0) {
         return;
     }
@@ -709,7 +709,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         DataFetchScheduler_Init(
             mTelemetrySchedulerArr[MODBUS_RTU],
             ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
-        
+
         if (err == NO_ERROR) {
             gLedState = LED_ON;
         } else { // ILLEGAL_PROPERTY
@@ -790,7 +790,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback) {
-    
+
     if (ct_error < 0) {
         goto end;
     }
@@ -802,7 +802,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
 
     ModbusOneshotcommand(payload, size, deviceMethodResponse);
-    
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
@@ -812,7 +812,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
     IoT_CentralLib_SendProperty(reportedPropertiesString);
 #endif
-    
+
 #ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
@@ -823,7 +823,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         if (pinId < 0) {
             goto err;
         }
-        
+
         if (0 != strncmp(payload, "null", strlen("null"))) {
             char *cmdPayload = (char *)calloc(size + 1, sizeof(char));
             if (NULL == cmdPayload) {
@@ -831,7 +831,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
             }
             strncpy(cmdPayload, payload, size);
             uint64_t initVal = strtoull(cmdPayload, NULL, 10);
-            
+
             if (initVal > 0x7FFFFFFF) {
                 free(cmdPayload);
                 goto err_value;
@@ -855,8 +855,8 @@ err_value:
     } else {
 err:
         strcpy(deviceMethodResponse, "\"Error\"");
-    }    
-            
+    }
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
