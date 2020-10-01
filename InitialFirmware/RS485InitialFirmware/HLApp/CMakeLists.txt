@@ -23,8 +23,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(RS485InitialFirmware_HLApp C)
 
-azsphere_configure_tools(TOOLS_REVISION "20.04")
-azsphere_configure_api(TARGET_API_SET "5+Beta2004")
+azsphere_configure_tools(TOOLS_REVISION "20.07")
+azsphere_configure_api(TARGET_API_SET "6")
 
 file(GLOB DRIVERS_SRC drivers/*.c)
 file(GLOB COMMON_SRC common/*.c)
