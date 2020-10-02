@@ -30,7 +30,6 @@ jobs:
       MODEL_NAME: "DI"
       SERIES_NAME: "cactusphere_100"
       INFO_FILE: "hash.txt"
-
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -101,28 +100,38 @@ jobs:
 
     - name: extract_info
       run: |
-        echo Date: > ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        date >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo Hashes: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        find ${GITHUB_WORKSPACE}/${RELEASE_DIR} -type f -print0 | sort -z | xargs -0 sha256sum >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_WORKFLOW: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_WORKFLOW} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_RUN_ID: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_RUN_ID} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_RUN_NUMBER: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_RUN_NUMBER} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_ACTION: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_ACTION} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_REPOSITORY: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_REPOSITORY} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_SHA: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_SHA} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo GITHUB_REF: >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
-        echo ${GITHUB_REF} >> ${GITHUB_WORKSPACE}/${RELEASE_DIR}/${INFO_FILE}
+        echo Date: > ${GITHUB_WORKSPACE}/${INFO_FILE}
+        date >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo Hashes: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        find ${GITHUB_WORKSPACE}/${RELEASE_DIR} -type f -print0 | sort -z | xargs -0 sha256sum >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_WORKFLOW: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_WORKFLOW} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_RUN_ID: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_RUN_ID} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_RUN_NUMBER: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_RUN_NUMBER} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_ACTION: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_ACTION} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_REPOSITORY: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_REPOSITORY} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_SHA: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_SHA} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo GITHUB_REF: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+        echo ${GITHUB_REF} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
+
+    - name: set_date
+      run: |
+        DATE=`date "+%Y%m%d"`
+        echo ::set-env name=DATE::$DATE
 
     - name: upload-package
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.SERIES_NAME }}_${{ env.MODEL_NAME }}_${{ env.APP_VERSION }}_${{ github.sha }}
+        name: ${{ env.SERIES_NAME }}_${{ env.MODEL_NAME }}_${{ env.APP_VERSION }}${{ env.DATE }}
         path: ${{ env.RELEASE_DIR }}
 
+    - name: upload-info
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.INFO_FILE }}
+        path: ${{ env.INFO_FILE }}
