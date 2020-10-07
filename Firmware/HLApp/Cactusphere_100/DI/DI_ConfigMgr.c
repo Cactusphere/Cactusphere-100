@@ -83,16 +83,19 @@ DI_ConfigMgr_CheckStateTransition(FEATURE_SELECT* NextStatus, bool* PrevStatus)
     bool ret = true;
 
     if (NextStatus[DI_FEATURE_PULSECOUNTER] == FEATURE_TRUE) {
+        // PulseCounter
         if ((PrevStatus[DI_FEATURE_EDGE] && (NextStatus[DI_FEATURE_EDGE] == FEATURE_UNSELECT)) ||
             (PrevStatus[DI_FEATURE_POLLING] && (NextStatus[DI_FEATURE_POLLING] == FEATURE_UNSELECT))) {
             ret = false;
         }
     } else if (NextStatus[DI_FEATURE_EDGE] == FEATURE_TRUE) {
+        // Edge
         if ((PrevStatus[DI_FEATURE_PULSECOUNTER] && (NextStatus[DI_FEATURE_PULSECOUNTER] == FEATURE_UNSELECT)) ||
             (PrevStatus[DI_FEATURE_POLLING] && (NextStatus[DI_FEATURE_POLLING] == FEATURE_UNSELECT))) {
             ret = false;
         }
     } else if (NextStatus[DI_FEATURE_POLLING] == FEATURE_TRUE) {
+        // Polling
         if ((PrevStatus[DI_FEATURE_PULSECOUNTER] && (NextStatus[DI_FEATURE_PULSECOUNTER] == FEATURE_UNSELECT)) ||
             (PrevStatus[DI_FEATURE_EDGE] && (NextStatus[DI_FEATURE_EDGE] == FEATURE_UNSELECT))) {
             ret = false;
@@ -116,10 +119,11 @@ DI_ConfigMgr_CheckDuplicate(json_value* json, int* enablePort)
         int selectNum = 0;
         
         for (int j = 0; j < DI_FEATURE_NUM; j++) {
+            bool value;
             sprintf(diFeatureStr, DIFeatureKey[j], i + DI_PORT_OFFSET);
             jsonObj = json_GetKeyJson(diFeatureStr, json);
-            if (jsonObj) {
-                selectStatus[j] = jsonObj->u.object.values[0].value->u.boolean;
+            if (json_GetBoolValue(jsonObj, &value)) {
+                selectStatus[j] = value;
                 if (selectStatus[j] == FEATURE_TRUE) {
                     if (++selectNum > 1) {
                         Log_Debug("Setting value is duplicated\n");

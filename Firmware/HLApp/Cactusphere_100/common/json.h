@@ -282,6 +282,10 @@ json_GetKeyJson(unsigned char* key, const json_value* jsonObj);
 bool json_GetNumericValue(const json_value* jsonObj,
                           uint32_t* value, int base);
 
+bool json_GetBoolValue(const json_value* jsonObj, bool* value);
+
+bool json_GetIntValue(const json_value* jsonObj, uint32_t* value, int base);
+
 #ifdef __cplusplus
    } /* extern "C" */
 #endif

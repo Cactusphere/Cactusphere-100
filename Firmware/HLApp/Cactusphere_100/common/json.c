@@ -1070,3 +1070,40 @@ bool json_GetNumericValue(const json_value* jsonObj, uint32_t* value, int base) 
    return ret;
 }
 
+bool json_GetBoolValue(const json_value* jsonObj, bool* value) {
+   bool ret = false;
+   if (jsonObj) {
+      switch (jsonObj->type)
+      {
+      case json_boolean:
+         *value = jsonObj->u.boolean;
+         ret = true;
+         break;
+      case json_object:
+         *value = jsonObj->u.object.values[0].value->u.boolean;
+         ret = true;
+         break;
+      default:
+         break;
+      }
+   }
+   return ret;
+}
+
+bool json_GetIntValue(const json_value* jsonObj, uint32_t* value, int base) {
+   bool ret = false;
+   if (jsonObj) {
+      switch (jsonObj->type)
+      {
+      case json_integer:
+         ret = json_GetNumericValue(jsonObj, value, base);
+         break;
+      case json_object:
+         ret = json_GetNumericValue(jsonObj->u.object.values[0].value, value, base);
+         break;
+      default:
+         break;
+      }
+   }
+   return ret;
+}

@@ -129,6 +129,7 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
         vector_clear(me->mFetchItems);
     }
 
+    // Check if the feature has changed.
     for (int i = 0; i < NUM_DI; i++) {
         int countVal = -1;
         int pollVal = -1;
@@ -140,12 +141,18 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
         json_value* pollObj = json_GetKeyJson(diPollingStr, json);
 
         if (countObj) {
-            countVal = (int)countObj->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, diCounterStr, TYPE_BOOL, (bool)countVal);
+            bool value;
+            if (json_GetBoolValue(countObj, &value)) {
+                countVal = (int)value;
+                PropertyItems_AddItem(propertyItem, diCounterStr, TYPE_BOOL, (bool)countVal);
+            }
         }
         if (pollObj) {
-            pollVal = (int)pollObj->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, diPollingStr, TYPE_BOOL, (bool)pollVal);
+            bool value;
+            if (json_GetBoolValue(pollObj, &value)) {
+                pollVal = (int)value;
+                PropertyItems_AddItem(propertyItem, diPollingStr, TYPE_BOOL, (bool)pollVal);
+            }
         }
 
         if ((countVal == 1) && (pollVal == 1)) {
@@ -193,13 +200,18 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             if (pinid < 0) {
                 continue;
             }
+            bool value;
             if (config[pinid].isPulseCounter) {
-                if (config[pinid].isPulseHigh != (bool)item->u.object.values[0].value->u.boolean) {
-                    config[pinid].isCountClear = true;
+                if (json_GetBoolValue(item,&value)) {
+                    if (config[pinid].isPulseHigh != value) {
+                        config[pinid].isCountClear = true;
+                    }
+                    config[pinid].isPulseHigh = value;
+                } else {
+                    ret = false;
                 }
-                config[pinid].isPulseHigh = (bool)item->u.object.values[0].value->u.boolean;
             }
-            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, (bool)item->u.object.values[0].value->u.boolean);
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, value);
         } else if (0 == strncmp(propertyName, CntIntervalDIKey, cntIntervalDiLen)) {
             pinid = strtol(&propertyName[cntIntervalDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
             if (pinid < 0) {
@@ -207,10 +219,9 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             }
 
             uint32_t value;
-            int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
+            int8_t result = json_GetIntValue(item, &value, 10);
             if (config[pinid].isPulseCounter) {
-                if (ret && value >= 1 && value <= 86400) {
+                if (result && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {
                         config[pinid].isCountClear = true;
                     }
@@ -228,10 +239,9 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             }
 
             uint32_t value;
-            int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
+            int8_t result = json_GetIntValue(item, &value, 10);
             if (config[pinid].isPulseCounter) {
-                if (ret && value >= 1 && value <= 1000) {
+                if (result && value >= 1 && value <= 1000) {
                     if (config[pinid].minPulseWidth != value) {
                         config[pinid].isCountClear = true;
                     }
@@ -249,10 +259,9 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
             }
 
             uint32_t value;
-            int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
+            int8_t result = json_GetIntValue(item, &value, 10);
             if (config[pinid].isPulseCounter) {
-                if (ret && value >= 1 && value <= 0x7FFFFFFF) {
+                if (result && value >= 1 && value <= 0x7FFFFFFF) {
                     if (config[pinid].maxPulseCount != value) {
                         config[pinid].isCountClear = true;
                     }
@@ -269,10 +278,10 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                 continue;
             }
             uint32_t value;
-            int8_t ret;
-            ret = json_GetNumericValue(item->u.object.values[0].value, &value, 10);
+            int8_t result = json_GetIntValue(item, &value, 10);
+
             if (!config[pinid].isPulseCounter) {
-                if (ret && value >= 1 && value <= 86400) {
+                if (result && value >= 1 && value <= 86400) {
                     if (config[pinid].intervalSec != value) {
                         config[pinid].isCountClear = true;
                     }
