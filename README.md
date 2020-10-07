@@ -31,6 +31,13 @@ https://armadillo.atmark-techno.com/resources/documents/cactusphere/manuals
 |DIInitialFirmware|接点入力モデル初期ファーム|
 |RS485InitialFirmware|RS485モデル初期ファーム|
 
+### DeviceTemplate
+|フォルダー名|説明|
+|:--|:--|
+|DI|接点入力モデルIoT Centralデバイステンプレート|
+|RS485|RS485モデルIoT Centralデバイステンプレート|
+
+
 ## ビルド時注意事項
 
 ### 高度なアプリケーション
