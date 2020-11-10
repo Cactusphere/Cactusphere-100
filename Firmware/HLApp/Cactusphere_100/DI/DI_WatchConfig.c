@@ -125,25 +125,35 @@ DI_WatchConfig_LoadFromJSON(DI_WatchConfig* me,
             if (pinid < 0) {
                 continue;
             }
-            if ((overWrite[pinid] && !(bool)item->u.object.values[0].value->u.boolean) ||
-                (!overWrite[pinid] && (bool)item->u.object.values[0].value->u.boolean)) {
-                // feature has changed
-                config[pinid].isCountClear = true;
+            bool value;
+            if (json_GetBoolValue(item, &value)) {
+                if ((overWrite[pinid] && !value) || (!overWrite[pinid] && value)) {
+                    // feature has changed
+                    config[pinid].isCountClear = true;
+                }
+                overWrite[pinid] = value;
+                sprintf(config[pinid].telemetryName, "DI%d_EdgeEvent", pinid + DI_WATCH_PORT_OFFSET);
+                PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, overWrite[pinid]);
+            } else {
+                ret = false;
             }
-            overWrite[pinid] = (bool)item->u.object.values[0].value->u.boolean;
-            sprintf(config[pinid].telemetryName, "DI%d_EdgeEvent", pinid + DI_WATCH_PORT_OFFSET);
-            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, overWrite[pinid]);
         } else if(0 == strncmp(propertyName, EdgeNotifyIsHighDIKey, notifyHighDiLen)) {
             pinid = strtol(&propertyName[notifyHighDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET;
             if (pinid < 0) {
                 continue;
             }
-            if (config[pinid].notifyChangeForHigh != (bool)item->u.object.values[0].value->u.boolean) {
-                // value has changed
-                config[pinid].isCountClear = true;
+            bool value;
+            if (json_GetBoolValue(item, &value)) {
+                if (config[pinid].notifyChangeForHigh != value) {
+                    // value has changed
+                    config[pinid].isCountClear = true;
+                }
+                config[pinid].notifyChangeForHigh = value;
+                PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, config[pinid].notifyChangeForHigh);
+            } else {
+                ret = false;
+                overWrite[pinid] = false;
             }
-            config[pinid].notifyChangeForHigh = (bool)item->u.object.values[0].value->u.boolean;
-            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, config[pinid].notifyChangeForHigh);
         }
     }
 

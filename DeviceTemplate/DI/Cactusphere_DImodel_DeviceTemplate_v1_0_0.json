@@ -1,0 +1,896 @@
+{
+  "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:1",
+  "@type": "CapabilityModel",
+  "implements": [
+    {
+      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:pulsecount:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "PulseCount"
+      },
+      "name": "PulseCount",
+      "schema": {
+        "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "PulseCount"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI1_count:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "DI1 PulseCount"
+            },
+            "name": "DI1_count",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI2_count:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "DI2 PulseCount"
+            },
+            "name": "DI2_count",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI3_count:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "DI3 PulseCount"
+            },
+            "name": "DI3_count",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI4_count:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "DI4 PulseCount"
+            },
+            "name": "DI4_count",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 PulseCounter"
+            },
+            "name": "Counter_DI1",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 PulseCounter"
+            },
+            "name": "Counter_DI2",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 PulseCounter"
+            },
+            "name": "Counter_DI3",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 PulseCounter"
+            },
+            "name": "Counter_DI4",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 PulseCounter IsPulseHigh"
+            },
+            "name": "cntIsPulseHigh_DI1",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 PulseCounter IsPulseHigh"
+            },
+            "name": "cntIsPulseHigh_DI2",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 PulseCounter IsPulseHigh"
+            },
+            "name": "cntIsPulseHigh_DI3",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 PulseCounter IsPulseHigh"
+            },
+            "name": "cntIsPulseHigh_DI4",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 PulseCounter Interval"
+            },
+            "name": "cntInterval_DI1",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 PulseCounter Interval"
+            },
+            "name": "cntInterval_DI2",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 PulseCounter Interval"
+            },
+            "name": "cntInterval_DI3",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 PulseCounter Interval"
+            },
+            "name": "cntInterval_DI4",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 PulseCounter MinPulseWidth"
+            },
+            "name": "cntMinPulseWidth_DI1",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 PulseCounter MinPulseWidth"
+            },
+            "name": "cntMinPulseWidth_DI2",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 PulseCounter MinPulseWidth"
+            },
+            "name": "cntMinPulseWidth_DI3",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 PulseCounter MinPulseWidth"
+            },
+            "name": "cntMinPulseWidth_DI4",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 PulseCounter MaxPulseCount"
+            },
+            "name": "cntMaxPulseCount_DI1",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 PulseCounter MaxPulseCount"
+            },
+            "name": "cntMaxPulseCount_DI2",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 PulseCounter MaxPulseCount"
+            },
+            "name": "cntMaxPulseCount_DI3",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 PulseCounter MaxPulseCount"
+            },
+            "name": "cntMaxPulseCount_DI4",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:1",
+            "@type": "Command",
+            "commandType": "synchronous",
+            "request": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:initValue:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "init value"
+              },
+              "name": "initValue",
+              "schema": "integer"
+            },
+            "response": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:initResult:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "initResult"
+              },
+              "name": "initResult",
+              "schema": "string"
+            },
+            "displayName": {
+              "en": "DI1 ClearCounter "
+            },
+            "name": "ClearCounter_DI1"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:1",
+            "@type": "Command",
+            "commandType": "synchronous",
+            "request": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:initValue:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "init value"
+              },
+              "name": "initValue",
+              "schema": "integer"
+            },
+            "response": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:initResult:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "initResult"
+              },
+              "name": "initResult",
+              "schema": "string"
+            },
+            "displayName": {
+              "en": "DI2 ClearCounter "
+            },
+            "name": "ClearCounter_DI2"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:1",
+            "@type": "Command",
+            "commandType": "synchronous",
+            "request": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:initValue:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "init value"
+              },
+              "name": "initValue",
+              "schema": "integer"
+            },
+            "response": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:initResult:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "initResult"
+              },
+              "name": "initResult",
+              "schema": "string"
+            },
+            "displayName": {
+              "en": "DI3 ClearCounter "
+            },
+            "name": "ClearCounter_DI3"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:1",
+            "@type": "Command",
+            "commandType": "synchronous",
+            "request": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:initValue:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "init value"
+              },
+              "name": "initValue",
+              "schema": "integer"
+            },
+            "response": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:initResult:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "initResult"
+              },
+              "name": "initResult",
+              "schema": "string"
+            },
+            "displayName": {
+              "en": "DI4 ClearCounter "
+            },
+            "name": "ClearCounter_DI4"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 ClearCounterResult"
+            },
+            "name": "ClearCounterResult_DI1",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 ClearCounterResult"
+            },
+            "name": "ClearCounterResult_DI2",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 ClearCounterResult"
+            },
+            "name": "ClearCounterResult_DI3",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 ClearCounterResult"
+            },
+            "name": "ClearCounterResult_DI4",
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:edge:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Edge"
+      },
+      "name": "Edge",
+      "schema": {
+        "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Edge"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI1_EdgeEvent:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "DI1 EdgeEvent"
+            },
+            "name": "DI1_EdgeEvent",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI2_EdgeEvent:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "DI2 EdgeEvent"
+            },
+            "name": "DI2_EdgeEvent",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI3_EdgeEvent:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "DI3 EdgeEvent"
+            },
+            "name": "DI3_EdgeEvent",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI4_EdgeEvent:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "DI4 EdgeEvent"
+            },
+            "name": "DI4_EdgeEvent",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 Edge"
+            },
+            "name": "Edge_DI1",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 Edge"
+            },
+            "name": "Edge_DI2",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 Edge"
+            },
+            "name": "Edge_DI3",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 Edge"
+            },
+            "name": "Edge_DI4",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 Edge NotifyIsHigh"
+            },
+            "name": "edgeNotifyIsHigh_DI1",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 Edge NotifyIsHigh"
+            },
+            "name": "edgeNotifyIsHigh_DI2",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 Edge NotifyIsHigh"
+            },
+            "name": "edgeNotifyIsHigh_DI3",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 Edge NotifyIsHigh"
+            },
+            "name": "edgeNotifyIsHigh_DI4",
+            "writable": true,
+            "schema": "boolean"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:polling:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Polling"
+      },
+      "name": "Polling",
+      "schema": {
+        "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Polling"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/State"
+            ],
+            "displayName": {
+              "en": "DI1 PollingStatus"
+            },
+            "name": "DI1_PollingStatus",
+            "schema": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:1",
+              "@type": "Enum",
+              "valueSchema": "integer",
+              "enumValues": [
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:High:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "High"
+                  },
+                  "enumValue": 1,
+                  "name": "High"
+                },
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:Low:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "Low"
+                  },
+                  "enumValue": 0,
+                  "name": "Low"
+                }
+              ]
+            }
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/State"
+            ],
+            "displayName": {
+              "en": "DI2 PollingStatus"
+            },
+            "name": "DI2_PollingStatus",
+            "schema": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:1",
+              "@type": "Enum",
+              "valueSchema": "integer",
+              "enumValues": [
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:High:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "High"
+                  },
+                  "enumValue": 1,
+                  "name": "High"
+                },
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:Low:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "Low"
+                  },
+                  "enumValue": 0,
+                  "name": "Low"
+                }
+              ]
+            }
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/State"
+            ],
+            "displayName": {
+              "en": "DI3 PollingStatus"
+            },
+            "name": "DI3_PollingStatus",
+            "schema": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:1",
+              "@type": "Enum",
+              "valueSchema": "integer",
+              "enumValues": [
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:High:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "High"
+                  },
+                  "enumValue": 1,
+                  "name": "High"
+                },
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:Low:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "Low"
+                  },
+                  "enumValue": 0,
+                  "name": "Low"
+                }
+              ]
+            }
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/State"
+            ],
+            "displayName": {
+              "en": "DI4 PollingStatus"
+            },
+            "name": "DI4_PollingStatus",
+            "schema": {
+              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:1",
+              "@type": "Enum",
+              "valueSchema": "integer",
+              "enumValues": [
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:High:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "High"
+                  },
+                  "enumValue": 1,
+                  "name": "High"
+                },
+                {
+                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:Low:1",
+                  "@type": "EnumValue",
+                  "displayName": {
+                    "en": "Low"
+                  },
+                  "enumValue": 0,
+                  "name": "Low"
+                }
+              ]
+            }
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 Polling"
+            },
+            "name": "Polling_DI1",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 Polling"
+            },
+            "name": "Polling_DI2",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 Polling"
+            },
+            "name": "Polling_DI3",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 Polling"
+            },
+            "name": "Polling_DI4",
+            "writable": true,
+            "schema": "boolean"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI1:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI1 Polling Interval"
+            },
+            "name": "pollInterval_DI1",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI2:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI2 Polling Interval"
+            },
+            "name": "pollInterval_DI2",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI3:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI3 Polling Interval"
+            },
+            "name": "pollInterval_DI3",
+            "writable": true,
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI4:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "DI4 Polling Interval"
+            },
+            "name": "pollInterval_DI4",
+            "writable": true,
+            "schema": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:deviceinfomation:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Device Information"
+      },
+      "name": "DeviceInformation",
+      "schema": {
+        "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Device Information"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:SerialNumber:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Serial Number"
+            },
+            "name": "SerialNumber",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:EthMacAddr:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Ethernet MAC Address"
+            },
+            "name": "EthMacAddr",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:ProductId:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Product ID"
+            },
+            "name": "ProductId",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:VendorId:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Vendor ID"
+            },
+            "name": "VendorId",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:WlanMacAddr:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Wireless LAN MAC Address"
+            },
+            "name": "WlanMacAddr",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:Generation:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Generation"
+            },
+            "name": "Generation",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:HLAppVersion:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "HLApp Version"
+            },
+            "name": "HLAppVersion",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:RTAppVersion:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "RTApp Version"
+            },
+            "name": "RTAppVersion",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:SphereWarning:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "Error information"
+            },
+            "name": "SphereWarning",
+            "schema": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "displayName": {
+    "en": "DIModel"
+  },
+  "@context": [
+    "http://azureiot.com/v1/contexts/IoTModel.json"
+  ]
+}
