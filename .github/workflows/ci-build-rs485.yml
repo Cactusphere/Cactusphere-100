@@ -3,12 +3,15 @@ name: ci-build-rs485
 on:
   push:
     branches: [ master, dev ]
+    tags:
+      - 'RS485_v*'
   pull_request:
     branches: [ master, dev ]
 
 jobs:
   build:
     env:
+      PRODUCT: "Cactusphere-100 RS485モデル"
       CMAKE_DIR: build
       RELEASE_DIR: "release"
       RELEASE_HL_DIR: "HLApp/bin"
@@ -16,8 +19,6 @@ jobs:
       RELEASE_INIT_DIR: "InitFW/"
       RELEASE_HW_DIR: "HW"
       ARM_TOOLCHAIN_URL: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/9-2020q2/gcc-arm-none-eabi-9-2020-q2-update-x86_64-linux.tar.bz2"
-      ARV: "6"
-      ARV_INIT: "6"
       BUILD_TYPE: "Debug"
       HL_PROJECT_DIR: "Firmware/HLApp/Cactusphere_100/atmarktechno_RS485_model"
       RT_PROJECT_DIR: "Firmware/RTApp/RS485"
@@ -32,7 +33,6 @@ jobs:
       MODEL_NAME: "RS485"
       SERIES_NAME: "cactusphere_100"
       INFO_FILE: "hash.txt"
-
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -41,6 +41,15 @@ jobs:
         pip3 install end
         python3 --version
         sudo apt-get install -y net-tools curl ninja-build tree
+
+    - name: get-build-args
+      run: |
+        SDK=$(cat Firmware/HLApp/Cactusphere_100/CMakeLists.txt | grep azsphere_configure_tools | sed -e "s/^.*\"\(.*\)\".*$/\1/")
+        ARV=$(cat Firmware/HLApp/Cactusphere_100/CMakeLists.txt | grep azsphere_configure_api | sed -e "s/^.*\"\(.*\)\".*$/\1/")
+        ARV_INIT=$(cat ${INIT_PROJECT_DIR_HL}/CMakeLists.txt | grep azsphere_configure_api | sed -e "s/^.*\"\(.*\)\".*$/\1/")
+        echo "SDK=$SDK" >> $GITHUB_ENV
+        echo "ARV=$ARV" >> $GITHUB_ENV
+        echo "ARV_INIT=$ARV_INIT" >> $GITHUB_ENV
 
     - name: install-sdk
       run: |
@@ -133,15 +142,66 @@ jobs:
         echo GITHUB_REF: >> ${GITHUB_WORKSPACE}/${INFO_FILE}
         echo ${GITHUB_REF} >> ${GITHUB_WORKSPACE}/${INFO_FILE}
 
-    - name: set_date
+    - name: set_archive_name
+      if: false == startsWith( github.ref, 'refs/tags/RS485_v' )
       run: |
-        DATE=`date "+%Y%m%d"`
-        echo ::set-env name=DATE::$DATE
+        TODAY=$(date "+%y%m%d")
+        VERSION=$(echo v$TODAY)
+        echo "ARCHIVE_NAME=${SERIES_NAME}_${MODEL_NAME}_${VERSION}" >> $GITHUB_ENV
 
+    - name: set_release_file_name
+      if: startsWith( github.ref, 'refs/tags/RS485_v' )
+      run: |
+        VERSION=$(echo ${{ github.ref }} | awk '{print substr($0, index($0, "v"))}')
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "ARCHIVE_NAME=${SERIES_NAME}_${MODEL_NAME}_${VERSION}" >> $GITHUB_ENV
+        DEV_TEMPLATE=$(ls DeviceTemplate/RS485/Cactusphere_RS485model_DeviceTemplate_*.json)
+        echo "DEVICE_TEMPLATE_NAME=$(basename $DEV_TEMPLATE)" >> $GITHUB_ENV
+        echo "DEVICE_TEMPLATE_PATH=$DEV_TEMPLATE" >> $GITHUB_ENV
+
+    - name: create-release
+      id: create_release
+      if: startsWith( github.ref, 'refs/tags/RS485_v' )
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ env.PRODUCT }} ${{ github.ref }}
+        body: |
+          **${{ env.PRODUCT }} ${{ env.VERSION }}**
+          ---
+
+          - 対応内容
+              - ***
+          - リリースファイル構成
+              -  Cactusphere ファームウェア
+                  - ${{ env.ARCHIVE_NAME }}.zip
+          Application Runtime Vesrion :　"${{ env.ARV }}"
+          ※ HLAppのimagepackage 作成時に必要となります
+
+              - Azure IoT Central デバイステンプレート
+                  - ${{ env.DEVICE_TEMPLATE_NAME }}
+              - Azure IoT Central アプリケーションテンプレート
+                  - ***
+
+          - 対応OS/SDK
+              - Azure Sphere OS
+                  - ${{ env.SDK }}
+              - Azure Sphere SDK
+                  - ${{ env.SDK }}
+        draft: true
+        prerelease: false
+
+    - name: archive-zip
+      if: startsWith( github.ref, 'refs/tags/RS485_v' )
+      run: |
+        cp -r ${{ env.RELEASE_DIR }} $ARCHIVE_NAME
+        zip -r $ARCHIVE_NAME.zip $ARCHIVE_NAME
     - name: upload-package
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.SERIES_NAME }}_${{ env.MODEL_NAME }}_${{ env.APP_VERSION }}${{ env.DATE }}
+        name: ${{ env.ARCHIVE_NAME }}
         path: ${{ env.RELEASE_DIR }}
 
     - name: upload-info
@@ -149,3 +209,25 @@ jobs:
       with:
         name: ${{ env.INFO_FILE }}
         path: ${{ env.INFO_FILE }}
+
+    - name: upload-release-asset
+      if: startsWith( github.ref, 'refs/tags/RS485_v' )
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.ARCHIVE_NAME }}.zip
+        asset_name: ${{ env.ARCHIVE_NAME }}.zip
+        asset_content_type: application/zip
+
+    - name: upload-release-asset
+      if: startsWith( github.ref, 'refs/tags/RS485_v' )
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.DEVICE_TEMPLATE_PATH }}
+        asset_name: ${{ env.DEVICE_TEMPLATE_NAME }}
+        asset_content_type: application/json
