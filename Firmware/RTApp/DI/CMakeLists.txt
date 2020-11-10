@@ -23,10 +23,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(DI_RTApp C)
 
-azsphere_configure_tools(TOOLS_REVISION "20.07")
+azsphere_configure_tools(TOOLS_REVISION "20.10")
 
 # App Version
-add_compile_definitions(RTAPP_VERSION="v1.0.1")
+add_compile_definitions(RTAPP_VERSION="20.10-v1.0.0")
 
 # Create executable
 ADD_EXECUTABLE(${PROJECT_NAME} main.c TimerUtil.c InterCoreComm.c PulseCounter.c

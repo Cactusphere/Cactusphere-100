@@ -23,8 +23,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(HLApp_Cactusphere_100 C)
 
-azsphere_configure_tools(TOOLS_REVISION "20.07")
-azsphere_configure_api(TARGET_API_SET "6")
+azsphere_configure_tools(TOOLS_REVISION "20.10")
+azsphere_configure_api(TARGET_API_SET "7")
 
 file(GLOB DRIVERS_SRC drivers/*.c)
 file(GLOB COMMON_SRC common/*.c)
@@ -41,7 +41,7 @@ if(PRODUCT STREQUAL "atmarktechno_DI_model")
     )
     file(GLOB DI_SRC DI/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${DI_SRC})
-    set(APP_VERSION "v1.0.2")
+    set(APP_VERSION "20.10-v1.0.0")
 endif()
 
 if(PRODUCT STREQUAL "atmarktechno_RS485_model")
@@ -51,7 +51,7 @@ if(PRODUCT STREQUAL "atmarktechno_RS485_model")
     )
     file(GLOB RS485_SRC RS485/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${RS485_SRC})
-    set(APP_VERSION "v1.0.0")
+    set(APP_VERSION "20.10-v1.0.0")
 endif()
 
 # App Version
