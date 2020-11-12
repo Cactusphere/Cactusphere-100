@@ -1,0 +1,376 @@
+{
+  "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:1",
+  "@type": "CapabilityModel",
+  "implements": [
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:dev:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Dev"
+      },
+      "name": "Dev",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:Dev:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Dev"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Dev:ModbusDevConfig:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "ModbusDevConfig"
+            },
+            "name": "ModbusDevConfig",
+            "writable": true,
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:read:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Read"
+      },
+      "name": "Read",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:Read:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Read"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Read:ModbusTelemetryConfig:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "ModbusTelemetryConfig"
+            },
+            "name": "ModbusTelemetryConfig",
+            "writable": true,
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:write:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Write"
+      },
+      "name": "Write",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:Write:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Write"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Write:ModbusWriteRegister:1",
+            "@type": "Command",
+            "commandType": "synchronous",
+            "request": {
+              "@id": "urn:Cactusphere_RS485Model_v1_1_0:Write:ModbusWriteRegister:config:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "config"
+              },
+              "name": "config",
+              "schema": "string"
+            },
+            "response": {
+              "@id": "urn:Cactusphere_RS485Model_v1_1_0:Write:ModbusWriteRegister:result:1",
+              "@type": "SchemaField",
+              "displayName": {
+                "en": "result"
+              },
+              "name": "result",
+              "schema": "string"
+            },
+            "displayName": {
+              "en": "ModbusWriteRegister"
+            },
+            "name": "ModbusWriteRegister"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Write:ModbusWriteRegisterResult:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "ModbusWriteRegisterResult"
+            },
+            "name": "ModbusWriteRegisterResult",
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:telemetry:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Telemetry"
+      },
+      "name": "Telemetry",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Telemerty"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data1:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data1"
+            },
+            "name": "Data1",
+            "schema": "double"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data2:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data2"
+            },
+            "name": "Data2",
+            "schema": "double"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data3:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data3"
+            },
+            "name": "Data3",
+            "schema": "double"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data4:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data4"
+            },
+            "name": "Data4",
+            "schema": "double"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data5:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data5"
+            },
+            "name": "Data5",
+            "schema": "double"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data6:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data6"
+            },
+            "name": "Data6",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data7:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data7"
+            },
+            "name": "Data7",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data8:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data8"
+            },
+            "name": "Data8",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data9:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data9"
+            },
+            "name": "Data9",
+            "schema": "integer"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:Telemerty:Data10:1",
+            "@type": "Telemetry",
+            "displayName": {
+              "en": "Data10"
+            },
+            "name": "Data10",
+            "schema": "integer"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:deviceinfomation:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Device Information"
+      },
+      "name": "DeviceInformation",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Device Information"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:SerialNumber:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Serial Number"
+            },
+            "name": "SerialNumber",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:EthMacAddr:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Ethernet MAC Address"
+            },
+            "name": "EthMacAddr",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:ProductId:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Product ID"
+            },
+            "name": "ProductId",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:VendorId:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Vendor ID"
+            },
+            "name": "VendorId",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:WlanMacAddr:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Wireless LAN MAC Address"
+            },
+            "name": "WlanMacAddr",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:Generation:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "Generation"
+            },
+            "name": "Generation",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:HLAppVersion:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "HLApp Version"
+            },
+            "name": "HLAppVersion",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:RTAppVersion:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "RTApp Version"
+            },
+            "name": "RTAppVersion",
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:DeviceInformation:SphereWarning:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "Error information"
+            },
+            "name": "SphereWarning",
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_RS485Model_v1_1_0:RS485Model:updateinformation:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Update Information"
+      },
+      "name": "UpdateInformation",
+      "schema": {
+        "@id": "urn:Cactusphere_RS485Model_v1_1_0:UpdateInformation:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Update Information"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:UpdateInformation:OSUpdateTime:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "OS Update time"
+            },
+            "name": "OSUpdateTime",
+            "writable": true,
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:UpdateInformation:FWUpdateTime:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "FW Update time"
+            },
+            "name": "FWUpdateTime",
+            "writable": true,
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_RS485Model_v1_1_0:UpdateInformation:UpdateInformation:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "Update information"
+            },
+            "name": "UpdateInformation",
+            "schema": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "displayName": {
+    "en": "RS485Model"
+  },
+  "@context": [
+    "http://azureiot.com/v1/contexts/IoTModel.json"
+  ]
+}
