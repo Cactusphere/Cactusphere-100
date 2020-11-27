@@ -142,7 +142,7 @@ jobs:
         VERSION=$(echo ${{ github.ref }} | awk '{print substr($0, index($0, "v"))}')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         echo "ARCHIVE_NAME=${SERIES_NAME}_${MODEL_NAME}_${VERSION}" >> $GITHUB_ENV
-        DEV_TEMPLATE=$(ls DeviceTemplate/DI/Cactusphere_DImodel_DeviceTemplate_*.json)
+        DEV_TEMPLATE=$(ls DeviceTemplate/DI/Cactusphere_DImodel_DeviceTemplate*.json)
         echo "DEVICE_TEMPLATE_NAME=$(basename $DEV_TEMPLATE)" >> $GITHUB_ENV
         echo "DEVICE_TEMPLATE_PATH=$DEV_TEMPLATE" >> $GITHUB_ENV
 
