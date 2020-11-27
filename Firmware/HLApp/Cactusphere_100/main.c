@@ -258,6 +258,24 @@ int main(int argc, char *argv[])
         Log_Debug("ScopeId needs to be set in the app_manifest CmdArgs\n");
         return -1;
     }
+
+    Log_Debug("Getting EEPROM information.\n");
+    err = GetEepromProperty(&eeprom);
+    if (err < 0) {
+        ct_error = -EEPROM_READ_ERROR;
+        gLedState = LED_BLINK;
+    }
+
+    static Networking_Interface_HardwareAddress ha;
+
+    for (int i = 0; i < HARDWARE_ADDRESS_LENGTH; i++) {
+        ha.address[i] = eeprom.ethernetMac[HARDWARE_ADDRESS_LENGTH - (i + 1)];
+    }
+    err = Networking_SetHardwareAddress("eth0", ha.address, HARDWARE_ADDRESS_LENGTH);
+    if (err < 0) {
+        Log_Debug("Error setting hardware address (eth0) %d\n", errno);
+    }
+
     err = Networking_SetInterfaceState("eth0", true);
     if (err < 0) {
         Log_Debug("Error setting interface state (eth0) %d\n", errno);
@@ -479,11 +497,7 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             cactusphere_error_notify(RE_CONNECT_IOTC);
         }
 
-        int ret;
-        Log_Debug("Getting EEPROM information.\n");
-        ret = GetEepromProperty(&eeprom);
-        if (ret < 0) {
-            ct_error = -EEPROM_READ_ERROR;
+        if (ct_error == -EEPROM_READ_ERROR) {
             gLedState = LED_BLINK;
             cactusphere_error_notify(EEPROM_READ_ERROR);
             exitCode = ExitCode_TermHandler_SigTerm;
