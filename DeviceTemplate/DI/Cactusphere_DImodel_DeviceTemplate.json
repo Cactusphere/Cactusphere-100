@@ -1,23 +1,23 @@
 {
-  "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:1",
+  "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:1",
   "@type": "CapabilityModel",
   "implements": [
     {
-      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:pulsecount:1",
+      "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:pulsecount:1",
       "@type": "InterfaceInstance",
       "displayName": {
         "en": "PulseCount"
       },
       "name": "PulseCount",
       "schema": {
-        "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:1",
+        "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:1",
         "@type": "Interface",
         "displayName": {
           "en": "PulseCount"
         },
         "contents": [
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI1_count:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:DI1_count:1",
             "@type": "Telemetry",
             "displayName": {
               "en": "DI1 PulseCount"
@@ -26,7 +26,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI2_count:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:DI2_count:1",
             "@type": "Telemetry",
             "displayName": {
               "en": "DI2 PulseCount"
@@ -35,7 +35,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI3_count:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:DI3_count:1",
             "@type": "Telemetry",
             "displayName": {
               "en": "DI3 PulseCount"
@@ -44,7 +44,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:DI4_count:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:DI4_count:1",
             "@type": "Telemetry",
             "displayName": {
               "en": "DI4 PulseCount"
@@ -53,7 +53,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:Counter_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 PulseCounter"
@@ -63,7 +63,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:Counter_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 PulseCounter"
@@ -73,7 +73,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:Counter_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 PulseCounter"
@@ -83,7 +83,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:Counter_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:Counter_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 PulseCounter"
@@ -93,7 +93,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntIsPulseHigh_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 PulseCounter IsPulseHigh"
@@ -103,7 +103,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntIsPulseHigh_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 PulseCounter IsPulseHigh"
@@ -113,7 +113,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntIsPulseHigh_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 PulseCounter IsPulseHigh"
@@ -123,7 +123,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntIsPulseHigh_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntIsPulseHigh_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 PulseCounter IsPulseHigh"
@@ -133,7 +133,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntInterval_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 PulseCounter Interval"
@@ -143,7 +143,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntInterval_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 PulseCounter Interval"
@@ -153,7 +153,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntInterval_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 PulseCounter Interval"
@@ -163,7 +163,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntInterval_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntInterval_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 PulseCounter Interval"
@@ -173,7 +173,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMinPulseWidth_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 PulseCounter MinPulseWidth"
@@ -183,7 +183,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMinPulseWidth_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 PulseCounter MinPulseWidth"
@@ -193,7 +193,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMinPulseWidth_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 PulseCounter MinPulseWidth"
@@ -203,7 +203,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMinPulseWidth_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMinPulseWidth_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 PulseCounter MinPulseWidth"
@@ -213,7 +213,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMaxPulseCount_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 PulseCounter MaxPulseCount"
@@ -223,7 +223,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMaxPulseCount_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 PulseCounter MaxPulseCount"
@@ -233,7 +233,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMaxPulseCount_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 PulseCounter MaxPulseCount"
@@ -243,7 +243,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:cntMaxPulseCount_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:cntMaxPulseCount_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 PulseCounter MaxPulseCount"
@@ -253,11 +253,11 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI1:1",
             "@type": "Command",
             "commandType": "synchronous",
             "request": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:initValue:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI1:initValue:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "init value"
@@ -266,7 +266,7 @@
               "schema": "integer"
             },
             "response": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI1:initResult:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI1:initResult:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "initResult"
@@ -280,11 +280,11 @@
             "name": "ClearCounter_DI1"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI2:1",
             "@type": "Command",
             "commandType": "synchronous",
             "request": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:initValue:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI2:initValue:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "init value"
@@ -293,7 +293,7 @@
               "schema": "integer"
             },
             "response": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI2:initResult:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI2:initResult:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "initResult"
@@ -307,11 +307,11 @@
             "name": "ClearCounter_DI2"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI3:1",
             "@type": "Command",
             "commandType": "synchronous",
             "request": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:initValue:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI3:initValue:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "init value"
@@ -320,7 +320,7 @@
               "schema": "integer"
             },
             "response": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI3:initResult:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI3:initResult:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "initResult"
@@ -334,11 +334,11 @@
             "name": "ClearCounter_DI3"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI4:1",
             "@type": "Command",
             "commandType": "synchronous",
             "request": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:initValue:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI4:initValue:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "init value"
@@ -347,7 +347,7 @@
               "schema": "integer"
             },
             "response": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounter_DI4:initResult:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounter_DI4:initResult:1",
               "@type": "SchemaField",
               "displayName": {
                 "en": "initResult"
@@ -361,7 +361,7 @@
             "name": "ClearCounter_DI4"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounterResult_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 ClearCounterResult"
@@ -370,7 +370,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounterResult_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 ClearCounterResult"
@@ -379,7 +379,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounterResult_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 ClearCounterResult"
@@ -388,7 +388,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:PulseCount:ClearCounterResult_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:PulseCount:ClearCounterResult_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 ClearCounterResult"
@@ -400,21 +400,21 @@
       }
     },
     {
-      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:edge:1",
+      "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:edge:1",
       "@type": "InterfaceInstance",
       "displayName": {
         "en": "Edge"
       },
       "name": "Edge",
       "schema": {
-        "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:1",
+        "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:1",
         "@type": "Interface",
         "displayName": {
           "en": "Edge"
         },
         "contents": [
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI1_EdgeEvent:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:DI1_EdgeEvent:1",
             "@type": [
               "Telemetry",
               "SemanticType/Event"
@@ -426,7 +426,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI2_EdgeEvent:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:DI2_EdgeEvent:1",
             "@type": [
               "Telemetry",
               "SemanticType/Event"
@@ -438,7 +438,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI3_EdgeEvent:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:DI3_EdgeEvent:1",
             "@type": [
               "Telemetry",
               "SemanticType/Event"
@@ -450,7 +450,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:DI4_EdgeEvent:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:DI4_EdgeEvent:1",
             "@type": [
               "Telemetry",
               "SemanticType/Event"
@@ -462,7 +462,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:Edge_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 Edge"
@@ -472,7 +472,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:Edge_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 Edge"
@@ -482,7 +482,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:Edge_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 Edge"
@@ -492,7 +492,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:Edge_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:Edge_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 Edge"
@@ -502,7 +502,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:edgeNotifyIsHigh_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 Edge NotifyIsHigh"
@@ -512,7 +512,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:edgeNotifyIsHigh_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 Edge NotifyIsHigh"
@@ -522,7 +522,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:edgeNotifyIsHigh_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 Edge NotifyIsHigh"
@@ -532,7 +532,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Edge:edgeNotifyIsHigh_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Edge:edgeNotifyIsHigh_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 Edge NotifyIsHigh"
@@ -545,21 +545,21 @@
       }
     },
     {
-      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:polling:1",
+      "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:polling:1",
       "@type": "InterfaceInstance",
       "displayName": {
         "en": "Polling"
       },
       "name": "Polling",
       "schema": {
-        "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:1",
+        "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:1",
         "@type": "Interface",
         "displayName": {
           "en": "Polling"
         },
         "contents": [
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI1_PollingStatus:1",
             "@type": [
               "Telemetry",
               "SemanticType/State"
@@ -569,12 +569,12 @@
             },
             "name": "DI1_PollingStatus",
             "schema": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI1_PollingStatus:status:1",
               "@type": "Enum",
               "valueSchema": "integer",
               "enumValues": [
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:High:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI1_PollingStatus:status:High:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "High"
@@ -583,7 +583,7 @@
                   "name": "High"
                 },
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI1_PollingStatus:status:Low:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI1_PollingStatus:status:Low:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "Low"
@@ -595,7 +595,7 @@
             }
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI2_PollingStatus:1",
             "@type": [
               "Telemetry",
               "SemanticType/State"
@@ -605,12 +605,12 @@
             },
             "name": "DI2_PollingStatus",
             "schema": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI2_PollingStatus:status:1",
               "@type": "Enum",
               "valueSchema": "integer",
               "enumValues": [
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:High:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI2_PollingStatus:status:High:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "High"
@@ -619,7 +619,7 @@
                   "name": "High"
                 },
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI2_PollingStatus:status:Low:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI2_PollingStatus:status:Low:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "Low"
@@ -631,7 +631,7 @@
             }
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI3_PollingStatus:1",
             "@type": [
               "Telemetry",
               "SemanticType/State"
@@ -641,12 +641,12 @@
             },
             "name": "DI3_PollingStatus",
             "schema": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI3_PollingStatus:status:1",
               "@type": "Enum",
               "valueSchema": "integer",
               "enumValues": [
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:High:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI3_PollingStatus:status:High:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "High"
@@ -655,7 +655,7 @@
                   "name": "High"
                 },
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI3_PollingStatus:status:Low:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI3_PollingStatus:status:Low:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "Low"
@@ -667,7 +667,7 @@
             }
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI4_PollingStatus:1",
             "@type": [
               "Telemetry",
               "SemanticType/State"
@@ -677,12 +677,12 @@
             },
             "name": "DI4_PollingStatus",
             "schema": {
-              "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:1",
+              "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI4_PollingStatus:status:1",
               "@type": "Enum",
               "valueSchema": "integer",
               "enumValues": [
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:High:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI4_PollingStatus:status:High:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "High"
@@ -691,7 +691,7 @@
                   "name": "High"
                 },
                 {
-                  "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:DI4_PollingStatus:status:Low:1",
+                  "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:DI4_PollingStatus:status:Low:1",
                   "@type": "EnumValue",
                   "displayName": {
                     "en": "Low"
@@ -703,7 +703,7 @@
             }
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:Polling_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 Polling"
@@ -713,7 +713,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:Polling_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 Polling"
@@ -723,7 +723,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:Polling_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 Polling"
@@ -733,7 +733,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:Polling_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:Polling_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 Polling"
@@ -743,7 +743,7 @@
             "schema": "boolean"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI1:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:pollInterval_DI1:1",
             "@type": "Property",
             "displayName": {
               "en": "DI1 Polling Interval"
@@ -753,7 +753,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI2:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:pollInterval_DI2:1",
             "@type": "Property",
             "displayName": {
               "en": "DI2 Polling Interval"
@@ -763,7 +763,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI3:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:pollInterval_DI3:1",
             "@type": "Property",
             "displayName": {
               "en": "DI3 Polling Interval"
@@ -773,7 +773,7 @@
             "schema": "integer"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:Polling:pollInterval_DI4:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:Polling:pollInterval_DI4:1",
             "@type": "Property",
             "displayName": {
               "en": "DI4 Polling Interval"
@@ -786,21 +786,21 @@
       }
     },
     {
-      "@id": "urn:Cactusphere_DIModel_v1_0_0:DIModel:deviceinfomation:1",
+      "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:deviceinfomation:1",
       "@type": "InterfaceInstance",
       "displayName": {
         "en": "Device Information"
       },
       "name": "DeviceInformation",
       "schema": {
-        "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:1",
+        "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:1",
         "@type": "Interface",
         "displayName": {
           "en": "Device Information"
         },
         "contents": [
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:SerialNumber:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:SerialNumber:1",
             "@type": "Property",
             "displayName": {
               "en": "Serial Number"
@@ -809,7 +809,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:EthMacAddr:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:EthMacAddr:1",
             "@type": "Property",
             "displayName": {
               "en": "Ethernet MAC Address"
@@ -818,7 +818,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:ProductId:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:ProductId:1",
             "@type": "Property",
             "displayName": {
               "en": "Product ID"
@@ -827,7 +827,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:VendorId:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:VendorId:1",
             "@type": "Property",
             "displayName": {
               "en": "Vendor ID"
@@ -836,7 +836,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:WlanMacAddr:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:WlanMacAddr:1",
             "@type": "Property",
             "displayName": {
               "en": "Wireless LAN MAC Address"
@@ -845,7 +845,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:Generation:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:Generation:1",
             "@type": "Property",
             "displayName": {
               "en": "Generation"
@@ -854,7 +854,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:HLAppVersion:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:HLAppVersion:1",
             "@type": "Property",
             "displayName": {
               "en": "HLApp Version"
@@ -863,7 +863,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:RTAppVersion:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:RTAppVersion:1",
             "@type": "Property",
             "displayName": {
               "en": "RTApp Version"
@@ -872,7 +872,7 @@
             "schema": "string"
           },
           {
-            "@id": "urn:Cactusphere_DIModel_v1_0_0:DeviceInformation:SphereWarning:1",
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:DeviceInformation:SphereWarning:1",
             "@type": [
               "Telemetry",
               "SemanticType/Event"
@@ -881,6 +881,55 @@
               "en": "Error information"
             },
             "name": "SphereWarning",
+            "schema": "string"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "urn:Cactusphere_DIModel_v1_1_0:DIModel:updateinformation:1",
+      "@type": "InterfaceInstance",
+      "displayName": {
+        "en": "Update Information"
+      },
+      "name": "UpdateInformation",
+      "schema": {
+        "@id": "urn:Cactusphere_DIModel_v1_1_0:UpdateInformation:1",
+        "@type": "Interface",
+        "displayName": {
+          "en": "Update Information"
+        },
+        "contents": [
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:UpdateInformation:OSUpdateTime:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "OS Update time"
+            },
+            "name": "OSUpdateTime",
+            "writable": true,
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:UpdateInformation:FWUpdateTime:1",
+            "@type": "Property",
+            "displayName": {
+              "en": "FW Update time"
+            },
+            "name": "FWUpdateTime",
+            "writable": true,
+            "schema": "string"
+          },
+          {
+            "@id": "urn:Cactusphere_DIModel_v1_1_0:UpdateInformation:UpdateInformation:1",
+            "@type": [
+              "Telemetry",
+              "SemanticType/Event"
+            ],
+            "displayName": {
+              "en": "Update information"
+            },
+            "name": "UpdateInformation",
             "schema": "string"
           }
         ]

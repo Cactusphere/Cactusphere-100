@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Copyright (c) 2020 Atmark Techno, Inc.
- * 
+ *
  * MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,6 +32,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <sys/timerfd.h>
+
 // applibs_versions.h defines the API struct versions to use for applibs APIs.
 #include "applibs_versions.h"
 #include <applibs/log.h>
@@ -39,6 +41,7 @@
 #include <applibs/gpio.h>
 #include <applibs/storage.h>
 #include <applibs/i2c.h>
+#include <applibs/sysevent.h>
 
 #include <hw/mt3620.h>
 
@@ -76,6 +79,15 @@ typedef enum {
     ExitCode_Init_LedTimer = 9,
 
     ExitCode_SetUpSysEvent_EventLoop = 10,
+    ExitCode_SetUpSysEvent_RegisterEvent,
+
+    ExitCode_UpdateCallback_UnexpectedEvent,
+    ExitCode_UpdateCallback_GetUpdateEvent,
+    ExitCode_UpdateCallback_DeferEvent,
+    ExitCode_UpdateCallback_FinalUpdate,
+    ExitCode_UpdateCallback_UnexpectedStatus,
+
+    ExitCode_Main_SetEnv,
 } ExitCode;
 
 static volatile sig_atomic_t exitCode = ExitCode_Success;
@@ -139,6 +151,14 @@ static const int keepalivePeriodSeconds = 20;
 static bool iothubAuthenticated = false;
 static bool iothubFirstConnected = false;
 
+// Application update events are received via an event loop.
+static EventRegistration *updateEventReg = NULL;
+
+static void UpdateCallback(SysEvent_Events event, SysEvent_Status status, const SysEvent_Info *info,
+                           void *context);
+static const char *EventStatusToString(SysEvent_Status status);
+static const char *UpdateTypeToString(SysEvent_UpdateType updateType);
+
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback);
 static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payload,
@@ -192,6 +212,17 @@ typedef struct
 } EventMsgData;
 
 eepromData eeprom;
+
+typedef struct
+{
+    char starttime[10];
+    char endtime[10];
+    char timezone[10];
+} DeferredUpdateConfig;
+
+DeferredUpdateConfig osUpdate = {0};
+DeferredUpdateConfig fwUpdate = {0};
+static bool updateDeferring = false;
 
 /// <summary>
 ///     Signal handler for termination requests. This handler must be async-signal-safe.
@@ -364,7 +395,7 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
             DataFetchScheduler_Schedule(scheduler);
         }
     }
-    
+
 dowork:
     if (iothubAuthenticated) {
         IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
@@ -410,6 +441,180 @@ void LedEventHandler(EventLoopTimer *timer)
 }
 
 /// <summary>
+///     This function matches the SysEvent_EventsCallback signature, and is invoked 
+///     from the event loop when the system wants to perform an application or system update.
+///     See <see cref="SysEvent_EventsCallback" /> for information about arguments.
+/// </summary>
+static void UpdateCallback(SysEvent_Events event, SysEvent_Status status, const SysEvent_Info *info,
+                           void *context)
+{
+    if (event != SysEvent_Events_UpdateReadyForInstall) {
+        Log_Debug("ERROR: unexpected event: 0x%x\n", event);
+        exitCode = ExitCode_UpdateCallback_UnexpectedEvent;
+        return;
+    }
+
+    // Print information about received message.
+    Log_Debug("INFO: Status: %s (%u)\n", EventStatusToString(status), status);
+
+    int result;
+
+    SysEvent_Info_UpdateData data;
+    DeferredUpdateConfig deferTime;
+    static char updateInfo[128] = { 0 };
+    uint32_t timeStamp = IoT_CentralLib_GetTmeStamp();
+
+    switch (status) {
+        // If an update is pending, and the user has not allowed updates, then defer the update.
+    case SysEvent_Status_Pending:
+        result = SysEvent_Info_GetUpdateData(info, &data);
+
+        if (result == -1) {
+            Log_Debug("ERROR: SysEvent_Info_GetUpdateData failed: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_UpdateCallback_GetUpdateEvent;
+            return;
+        }
+
+        if (data.update_type == SysEvent_UpdateType_App && strlen(fwUpdate.starttime)
+            && strlen(fwUpdate.endtime) && strlen(fwUpdate.timezone) ) {
+            deferTime = fwUpdate;
+        } else if (data.update_type == SysEvent_UpdateType_System && strlen(osUpdate.starttime)
+                 && strlen(osUpdate.endtime) && strlen(osUpdate.timezone) ) {
+            deferTime = osUpdate;
+        } else if (updateDeferring == false){
+            result = SysEvent_DeferEvent(SysEvent_Events_UpdateReadyForInstall, 1);
+            if (result == -1) {
+                Log_Debug("ERROR: SysEvent_DeferEvent: %s (%d).\n", strerror(errno), errno);
+                exitCode = ExitCode_UpdateCallback_DeferEvent;
+            }
+            return;
+        } else {
+            return;
+        }
+        Log_Debug("INFO: Update Type: %s (%u).\n", UpdateTypeToString(data.update_type),
+                data.update_type);
+        result = setenv("TZ", deferTime.timezone, 1);
+        if (result == -1) {
+            Log_Debug("ERROR: setenv failed with error code: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_Main_SetEnv;
+        }
+        int deferMin = 0;
+        char timeBuf[64];
+        time_t t, startTime_t, endTime_t;
+        time(&t);
+        struct tm tm = *localtime(&t);
+        if (strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %T %Z", &tm) != 0) {
+                Log_Debug("INFO: Received update event: %s\n", timeBuf);
+        }
+
+        struct tm startTm = tm;
+        struct tm endTm = tm;
+        int hour, min;
+        sscanf(deferTime.starttime, "%d:%d", &hour, &min);
+        startTm.tm_hour = hour;
+        startTm.tm_min = min;
+        startTime_t = mktime(&startTm);
+        if (t > startTime_t) {
+            sscanf(deferTime.endtime, "%d:%d", &hour, &min);
+            endTm.tm_hour = hour;
+            endTm.tm_min = min;
+            endTime_t = mktime(&endTm);
+            if (t < endTime_t) {
+                break;
+            }
+            startTm.tm_mday += 1;
+            startTime_t = mktime(&startTm);
+        }
+        deferMin = (int)(difftime(startTime_t, t) / 60);
+        if (deferMin == 0) {
+            return;
+        }
+
+        result = SysEvent_DeferEvent(SysEvent_Events_UpdateReadyForInstall, deferMin);
+        if (result == -1) {
+            Log_Debug("ERROR: SysEvent_DeferEvent: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_UpdateCallback_DeferEvent;
+        }
+        Log_Debug("INFO: Deferring update for %d minute.\n", deferMin);
+        if (strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %T %Z", &startTm) != 0) {
+            Log_Debug("INFO: Update scheduled: %s\n", timeBuf);
+            snprintf(updateInfo, sizeof(updateInfo),
+            "{ \"UpdateInformation\": \"Update scheduled %s.\" }", timeBuf);
+            IoT_CentralLib_SendTelemetry(updateInfo, &timeStamp);
+        }
+        break;
+
+    case SysEvent_Status_Final:
+        Log_Debug("INFO: Final update. App will update in 10 seconds.\n");
+        result = SysEvent_Info_GetUpdateData(info, &data);
+        if (result != -1) {
+            snprintf(updateInfo, sizeof(updateInfo),
+            "{ \"UpdateInformation\": \"%s updated.\" }", UpdateTypeToString(data.update_type));
+            IoT_CentralLib_SendTelemetry(updateInfo, &timeStamp);
+            IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
+        }
+        // Terminate app before it is forcibly shut down and replaced.
+        // The application may be restarted before the update is applied.
+        exitCode = ExitCode_UpdateCallback_FinalUpdate;
+        break;
+
+    case SysEvent_Status_Deferred:
+        Log_Debug("INFO: Update deferred.\n");
+        break;
+
+    case SysEvent_Status_Complete:
+    default:
+        Log_Debug("ERROR: Unexpected status %d.\n", status);
+        exitCode = ExitCode_UpdateCallback_UnexpectedStatus;
+        break;
+    }
+
+    Log_Debug("\n");
+}
+
+/// <summary>
+///     Convert the supplied system event status to a human-readable string.
+/// </summary>
+/// <param name="status">The status.</param>
+/// <returns>String representation of the supplied status.</param>
+static const char *EventStatusToString(SysEvent_Status status)
+{
+    switch (status) {
+    case SysEvent_Status_Invalid:
+        return "Invalid";
+    case SysEvent_Status_Pending:
+        return "Pending";
+    case SysEvent_Status_Final:
+        return "Final";
+    case SysEvent_Status_Deferred:
+        return "Deferred";
+    case SysEvent_Status_Complete:
+        return "Completed";
+    default:
+        return "Unknown";
+    }
+}
+
+/// <summary>
+///     Convert the supplied update type to a human-readable string.
+/// </summary>
+/// <param name="updateType">The update type.</param>
+/// <returns>String representation of the supplied update type.</param>
+static const char *UpdateTypeToString(SysEvent_UpdateType updateType)
+{
+    switch (updateType) {
+    case SysEvent_UpdateType_Invalid:
+        return "Invalid";
+    case SysEvent_UpdateType_App:
+        return "Application";
+    case SysEvent_UpdateType_System:
+        return "System";
+    default:
+        return "Unknown";
+    }
+}
+
+/// <summary>
 ///     Set up SIGTERM termination handler, initialize peripherals, and set up event handlers.
 /// </summary>
 /// <returns>ExitCode_Success if all resources were allocated successfully; otherwise another
@@ -441,6 +646,13 @@ static ExitCode InitPeripheralsAndHandlers(void)
         CreateEventLoopPeriodicTimer(eventLoop, &AzureTimerEventHandler, &azureTelemetryPeriod);
     if (azureTimer == NULL) {
         return ExitCode_Init_AzureTimer;
+    }
+
+    updateEventReg = SysEvent_RegisterForEventNotifications(
+        eventLoop, SysEvent_Events_UpdateReadyForInstall, UpdateCallback, NULL);
+    if (updateEventReg == NULL) {
+        Log_Debug("ERROR: could not register update event: %s (%d).\n", strerror(errno), errno);
+        return ExitCode_SetUpSysEvent_RegisterEvent;
     }
 
     // LED
@@ -475,6 +687,9 @@ static void ClosePeripheralsAndHandlers(void)
     DisposeEventLoopTimer(azureTimer);
     DisposeEventLoopTimer(watchdogLoopTimer);
     DisposeEventLoopTimer(ledEventLoopTimer);
+
+    SysEvent_UnregisterForEventNotifications(updateEventReg);
+
     EventLoop_Close(eventLoop);
 }
 
@@ -638,7 +853,7 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
     char* propertyStr = NULL;
     size_t propertyStr_len = 0;
-    
+
     if (! vector_is_empty(Send_PropertyItem)) {
         ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
         for (int i = 0; i < vector_size(Send_PropertyItem); i++){
@@ -685,6 +900,61 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     }
 }
 
+static void ParseDeferredUpdateConfig(json_value* json,
+    DeferredUpdateConfig* config, const char* key, vector item)
+{
+    if (json->type != json_string) {
+        json = json_GetKeyJson("value", json);
+    }
+    PropertyItems_AddItem(item, key, TYPE_STR, json->u.string.ptr);
+    json = json_parse(json->u.string.ptr, json->u.string.length);
+
+    for (unsigned int i = 0; i < json->u.object.length; i++) {
+        char* propertyName = json->u.object.values[i].name;
+        json_value* item = json->u.object.values[i].value;
+
+        if (0 == strcmp(propertyName, "start")) {
+            strncpy(config->starttime, item->u.string.ptr, item->u.string.length);
+        } else if (0 == strcmp(propertyName, "end")) {
+            strncpy(config->endtime, item->u.string.ptr, item->u.string.length);
+        } else if (0 == strcmp(propertyName, "timezone")) {
+             strncpy(config->timezone, item->u.string.ptr, item->u.string.length);
+        }
+    }
+}
+
+static bool CheckDeferredUpdateConfig(const unsigned char* payload,
+    unsigned int payloadSize, vector item)
+{
+    json_value* jsonObj = json_parse(payload, payloadSize);
+    json_value* desiredObj = NULL;
+    json_value* osUpdateObj = NULL;
+    json_value* fwUpdateObj = NULL;
+    bool ret = false;
+
+    updateDeferring = true;
+    Log_Debug("payload=%s", payload);
+    desiredObj = json_GetKeyJson("desired", jsonObj);
+    if (desiredObj == NULL) {
+        osUpdateObj = json_GetKeyJson("OSUpdateTime", jsonObj);
+        fwUpdateObj = json_GetKeyJson("FWUpdateTime", jsonObj);
+    } else {
+        osUpdateObj = json_GetKeyJson("OSUpdateTime", desiredObj);
+        fwUpdateObj = json_GetKeyJson("FWUpdateTime", desiredObj);
+    }
+    if (osUpdateObj != NULL) {
+        ParseDeferredUpdateConfig(osUpdateObj, &osUpdate, "OSUpdateTime", item);
+        ret = true;
+    }
+
+    if (fwUpdateObj != NULL) {
+        ParseDeferredUpdateConfig(fwUpdateObj, &fwUpdate, "FWUpdateTime", item);
+        ret = true;
+    }
+
+    return ret;
+}
+
 /// <summary>
 ///     Callback invoked when a Device Twin update is received from IoT Hub.
 ///     Updates local state for 'showEvents' (bool).
@@ -693,15 +963,20 @@ static void SendPropertyResponse(vector Send_PropertyItem)
 /// <param name="payloadSize">size of the Device Twin JSON document</param>
 static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payload,
                          size_t payloadSize, void *userContextCallback)
-{   
+{
     if (ct_error < 0) {
         return;
     }
 
     vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
 
+    bool defupderr = CheckDeferredUpdateConfig(payload, payloadSize, Send_PropertyItem);
+
 #ifdef USE_MODBUS
     SphereWarning err = ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    if (defupderr && err == UNSUPPORTED_PROPERTY) {
+        err = NO_ERROR;
+    }
     switch (err)
     {
     case NO_ERROR:
@@ -709,7 +984,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         DataFetchScheduler_Init(
             mTelemetrySchedulerArr[MODBUS_RTU],
             ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
-        
+
         if (err == NO_ERROR) {
             gLedState = LED_ON;
         } else { // ILLEGAL_PROPERTY
@@ -744,6 +1019,9 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
 #ifdef USE_DI
     SphereWarning err = DI_ConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    if (defupderr && err == UNSUPPORTED_PROPERTY) {
+        err = NO_ERROR;
+    }
     switch (err)
     {
     case NO_ERROR:
@@ -790,7 +1068,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback) {
-    
+
     if (ct_error < 0) {
         goto end;
     }
@@ -802,7 +1080,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
 
     ModbusOneshotcommand(payload, size, deviceMethodResponse);
-    
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
@@ -812,7 +1090,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
     IoT_CentralLib_SendProperty(reportedPropertiesString);
 #endif
-    
+
 #ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
@@ -823,7 +1101,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         if (pinId < 0) {
             goto err;
         }
-        
+
         if (0 != strncmp(payload, "null", strlen("null"))) {
             char *cmdPayload = (char *)calloc(size + 1, sizeof(char));
             if (NULL == cmdPayload) {
@@ -831,7 +1109,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
             }
             strncpy(cmdPayload, payload, size);
             uint64_t initVal = strtoull(cmdPayload, NULL, 10);
-            
+
             if (initVal > 0x7FFFFFFF) {
                 free(cmdPayload);
                 goto err_value;
@@ -855,8 +1133,8 @@ err_value:
     } else {
 err:
         strcpy(deviceMethodResponse, "\"Error\"");
-    }    
-            
+    }
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
