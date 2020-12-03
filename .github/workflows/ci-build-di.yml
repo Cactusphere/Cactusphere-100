@@ -51,9 +51,10 @@ jobs:
 
     - name: install-sdk
       run: |
-        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install.sh
-        chmod +x install.sh
-        yes Y | sudo ./install.sh
+        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install_azure_sphere_sdk.tar.gz
+        tar xf install_azure_sphere_sdk.tar.gz
+        chmod +x install_azure_sphere_sdk.sh
+        yes Y | sudo ./install_azure_sphere_sdk.sh
 
     - name: install-arm-rt-toolchain
       run: |
