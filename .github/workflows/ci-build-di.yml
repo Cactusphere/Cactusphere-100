@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     env:
-      PRODUCT: "Cactusphere-100 接点入力モデル"
+      PRODUCT: "Cactusphere 110 接点入力モデル"
       CMAKE_DIR: build
       RELEASE_DIR: "release"
       RELEASE_HL_DIR: "HLApp/bin"
@@ -29,7 +29,7 @@ jobs:
       INIT_ELF: "DIInitialFirmware.imagepackage"
       HWDEF: "mt3620.json"
       MODEL_NAME: "DI"
-      SERIES_NAME: "cactusphere_100"
+      SERIES_NAME: "cactusphere_110"
       INFO_FILE: "hash.txt"
     runs-on: ubuntu-18.04
     steps:
