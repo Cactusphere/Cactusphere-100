@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     env:
-      PRODUCT: "Cactusphere-100 RS485モデル"
+      PRODUCT: "Cactusphere 150 RS485モデル"
       CMAKE_DIR: build
       RELEASE_DIR: "release"
       RELEASE_HL_DIR: "HLApp/bin"
@@ -31,7 +31,7 @@ jobs:
       INIT_ELF_RT: "RS485InitialFirmware_RTApp.imagepackage"
       HWDEF: "mt3620.json"
       MODEL_NAME: "RS485"
-      SERIES_NAME: "cactusphere_100"
+      SERIES_NAME: "cactusphere_150"
       INFO_FILE: "hash.txt"
     runs-on: ubuntu-18.04
     steps:
@@ -53,9 +53,10 @@ jobs:
 
     - name: install-sdk
       run: |
-        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install.sh
-        chmod +x install.sh
-        yes Y | sudo ./install.sh
+        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install_azure_sphere_sdk.tar.gz
+        tar xf install_azure_sphere_sdk.tar.gz
+        chmod +x install_azure_sphere_sdk.sh
+        yes Y | sudo ./install_azure_sphere_sdk.sh
 
     - name: install-arm-rt-toolchain
       run: |
