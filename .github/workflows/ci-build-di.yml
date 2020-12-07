@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     env:
-      PRODUCT: "Cactusphere-100 接点入力モデル"
+      PRODUCT: "Cactusphere 110 接点入力モデル"
       CMAKE_DIR: build
       RELEASE_DIR: "release"
       RELEASE_HL_DIR: "HLApp/bin"
@@ -29,7 +29,7 @@ jobs:
       INIT_ELF: "DIInitialFirmware.imagepackage"
       HWDEF: "mt3620.json"
       MODEL_NAME: "DI"
-      SERIES_NAME: "cactusphere_100"
+      SERIES_NAME: "cactusphere_110"
       INFO_FILE: "hash.txt"
     runs-on: ubuntu-18.04
     steps:
@@ -51,9 +51,10 @@ jobs:
 
     - name: install-sdk
       run: |
-        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install.sh
-        chmod +x install.sh
-        yes Y | sudo ./install.sh
+        wget -nv https://aka.ms/AzureSphereSDKInstall/Linux -O install_azure_sphere_sdk.tar.gz
+        tar xf install_azure_sphere_sdk.tar.gz
+        chmod +x install_azure_sphere_sdk.sh
+        yes Y | sudo ./install_azure_sphere_sdk.sh
 
     - name: install-arm-rt-toolchain
       run: |
@@ -142,7 +143,7 @@ jobs:
         VERSION=$(echo ${{ github.ref }} | awk '{print substr($0, index($0, "v"))}')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         echo "ARCHIVE_NAME=${SERIES_NAME}_${MODEL_NAME}_${VERSION}" >> $GITHUB_ENV
-        DEV_TEMPLATE=$(ls DeviceTemplate/DI/Cactusphere_DImodel_DeviceTemplate_*.json)
+        DEV_TEMPLATE=$(ls DeviceTemplate/DI/Cactusphere_DImodel_DeviceTemplate*.json)
         echo "DEVICE_TEMPLATE_NAME=$(basename $DEV_TEMPLATE)" >> $GITHUB_ENV
         echo "DEVICE_TEMPLATE_PATH=$DEV_TEMPLATE" >> $GITHUB_ENV
 
@@ -154,7 +155,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: ${{ env.PRODUCT }} ${{ github.ref }}
+        release_name: ${{ env.PRODUCT }} ${{ env.VERSION }}
         body: |
           **${{ env.PRODUCT }} ${{ env.VERSION }}**
           ---

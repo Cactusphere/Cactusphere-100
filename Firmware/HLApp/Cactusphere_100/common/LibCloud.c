@@ -105,8 +105,6 @@ MakeDateTimeStr(char* strBuf, size_t bufSize, uint32_t timeStamp)
     struct tm*	tmVal;
 
     tmVal = gmtime(&theTime);
-    theTime -= tmVal->__tm_gmtoff;
-    tmVal = localtime(&theTime);
     strftime(strBuf, bufSize, "%Y-%m-%dT%H:%M:%S", tmVal);
     sprintf(strBuf + strlen(strBuf), ".%07ldZ", 0);
 //

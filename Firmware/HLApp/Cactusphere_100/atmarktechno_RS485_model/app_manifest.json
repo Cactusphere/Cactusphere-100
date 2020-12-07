@@ -12,7 +12,10 @@
     "I2cMaster": [ "$MT3620_ISU1_I2C" ],
     "DeviceAuthentication": "00000000-0000-0000-0000-000000000000",
     "AllowedApplicationConnections": [ "c8b178fe-5942-4584-826c-51856ac5e4ff" ],
-    "NetworkConfig": true
+    "NetworkConfig": true,
+    "HardwareAddressConfig": true,
+    "SystemEventNotifications": true,
+    "SoftwareUpdateDeferral": true
   },
   "ApplicationType": "Default"
 }

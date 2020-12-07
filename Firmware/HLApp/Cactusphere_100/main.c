@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Copyright (c) 2020 Atmark Techno, Inc.
- * 
+ *
  * MIT License
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,6 +31,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <ctype.h>
+#include <getopt.h>
+
+#include <sys/timerfd.h>
 
 // applibs_versions.h defines the API struct versions to use for applibs APIs.
 #include "applibs_versions.h"
@@ -39,6 +43,7 @@
 #include <applibs/gpio.h>
 #include <applibs/storage.h>
 #include <applibs/i2c.h>
+#include <applibs/sysevent.h>
 
 #include <hw/mt3620.h>
 
@@ -51,6 +56,7 @@
 #include <iothubtransportmqtt.h>
 #include <iothub.h>
 #include <azure_sphere_provisioning.h>
+#include <iothub_security_factory.h>
 
 #include "drivers/at24c0.h"
 
@@ -76,6 +82,20 @@ typedef enum {
     ExitCode_Init_LedTimer = 9,
 
     ExitCode_SetUpSysEvent_EventLoop = 10,
+    ExitCode_SetUpSysEvent_RegisterEvent,
+
+    ExitCode_UpdateCallback_UnexpectedEvent,
+    ExitCode_UpdateCallback_GetUpdateEvent,
+    ExitCode_UpdateCallback_DeferEvent,
+    ExitCode_UpdateCallback_FinalUpdate,
+    ExitCode_UpdateCallback_UnexpectedStatus,
+
+    ExitCode_Main_SetEnv,
+
+    ExitCode_Validate_ConnectionType,
+    ExitCode_Validate_ScopeId,
+    ExitCode_Validate_IotHubHostname,
+    ExitCode_Validate_DeviceId,
 } ExitCode;
 
 static volatile sig_atomic_t exitCode = ExitCode_Success;
@@ -129,15 +149,35 @@ static int ct_error = 0;
 // cache buffer size (telemetry data)
 #define CACHE_BUF_SIZE (50 * 1024)
 
-// Azure IoT Hub/Central defines.
-#define SCOPEID_LENGTH 20
-static char scopeId[SCOPEID_LENGTH]; // ScopeId for the Azure IoT Central application, set in
-                                     // app_manifest.json, CmdArgs
+/// <summary>
+/// Connection types to use when connecting to the Azure IoT Hub.
+/// </summary>
+typedef enum {
+    ConnectionType_NotDefined = 0,
+    ConnectionType_DPS = 1,
+    ConnectionType_Direct = 2
+} ConnectionType;
+
+// Azure IoT definitions.
+static char *scopeId = NULL;                                      // ScopeId for DPS.
+static char *hubHostName = NULL;                                  // Azure IoT Hub Hostname.
+static char *deviceId = NULL;                                     // Device ID must be in lowercase.
+static ConnectionType connectionType = ConnectionType_NotDefined; // Type of connection to use.
 
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
 static bool iothubAuthenticated = false;
 static bool iothubFirstConnected = false;
+static const int deviceIdForDaaCertUsage = 1; // A constant used to direct the IoT SDK to use
+                                              // the DAA cert under the hood.
+
+// Application update events are received via an event loop.
+static EventRegistration *updateEventReg = NULL;
+
+static void UpdateCallback(SysEvent_Events event, SysEvent_Status status, const SysEvent_Info *info,
+                           void *context);
+static const char *EventStatusToString(SysEvent_Status status);
+static const char *UpdateTypeToString(SysEvent_UpdateType updateType);
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback);
@@ -184,6 +224,10 @@ static DataFetchScheduler* mTelemetrySchedulerArr[MAX_SCHEDULER_NUM] = { NULL };
 static void AzureTimerEventHandler(EventLoopTimer *timer);
 static void WatchdogEventHandler(EventLoopTimer *timer);
 static void LedEventHandler(EventLoopTimer *timer);
+static ExitCode ValidateUserConfiguration(void);
+static void ParseCommandLineArguments(int argc, char *argv[]);
+static bool SetupAzureIoTHubClientWithDaa(void);
+static bool SetupAzureIoTHubClientWithDps(void);
 
 typedef struct
 {
@@ -192,6 +236,22 @@ typedef struct
 } EventMsgData;
 
 eepromData eeprom;
+
+typedef struct
+{
+    char starttime[10];
+    char endtime[10];
+    char timezone[10];
+} DeferredUpdateConfig;
+
+DeferredUpdateConfig osUpdate = {0};
+DeferredUpdateConfig fwUpdate = {0};
+static bool updateDeferring = false;
+// Usage text for command line arguments in application manifest.
+static const char *cmdLineArgsUsageText =
+    "DPS connection type: \" CmdArgs \": [\"--ConnectionType DPS\", \"--ScopeID <scope_id>\"]\n"
+    "Direction connection type: \" CmdArgs \": [\" --ConnectionType Direct\", "
+    "\"--Hostname <azureiothub_hostname>\", \"--DeviceID <device_id>\"]\n";
 
 /// <summary>
 ///     Signal handler for termination requests. This handler must be async-signal-safe.
@@ -251,16 +311,32 @@ int main(int argc, char *argv[])
     TelemetryItems_InitDictionary();
     SendRTApp_InitHandlers();
 
-    if (argc == 2) {
-        Log_Debug("Setting Azure Scope ID %s\n", argv[1]);
-        strncpy(scopeId, argv[1], SCOPEID_LENGTH);
-    } else {
-        Log_Debug("ScopeId needs to be set in the app_manifest CmdArgs\n");
-        return -1;
+    Log_Debug("Getting EEPROM information.\n");
+    err = GetEepromProperty(&eeprom);
+    if (err < 0) {
+        ct_error = -EEPROM_READ_ERROR;
+        gLedState = LED_BLINK;
     }
+
+    static Networking_Interface_HardwareAddress ha;
+
+    for (int i = 0; i < HARDWARE_ADDRESS_LENGTH; i++) {
+        ha.address[i] = eeprom.ethernetMac[HARDWARE_ADDRESS_LENGTH - (i + 1)];
+    }
+    err = Networking_SetHardwareAddress("eth0", ha.address, HARDWARE_ADDRESS_LENGTH);
+    if (err < 0) {
+        Log_Debug("Error setting hardware address (eth0) %d\n", errno);
+    }
+
     err = Networking_SetInterfaceState("eth0", true);
     if (err < 0) {
         Log_Debug("Error setting interface state (eth0) %d\n", errno);
+    }
+    ParseCommandLineArguments(argc, argv);
+
+    exitCode = ValidateUserConfiguration();
+    if (exitCode != ExitCode_Success) {
+        return exitCode;
     }
 
     exitCode = InitPeripheralsAndHandlers();
@@ -346,11 +422,113 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
             DataFetchScheduler_Schedule(scheduler);
         }
     }
-    
+
 dowork:
     if (iothubAuthenticated) {
         IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
     }
+}
+
+/// <summary>
+///     Parse the command line arguments given in the application manifest.
+/// </summary>
+static void ParseCommandLineArguments(int argc, char *argv[])
+{
+    int option = 0;
+    static const struct option cmdLineOptions[] = {{"ConnectionType", required_argument, NULL, 'c'},
+                                                   {"ScopeID", required_argument, NULL, 's'},
+                                                   {"Hostname", required_argument, NULL, 'h'},
+                                                   {"DeviceID", required_argument, NULL, 'd'},
+                                                   {NULL, 0, NULL, 0}};
+
+    if (argc == 2) {
+        scopeId = argv[1];
+        connectionType = ConnectionType_DPS;
+        Log_Debug("ScopeID: %s\n", scopeId);
+    } else {
+        // Loop over all of the options
+        while ((option = getopt_long(argc, argv, "c:s:h:d:", cmdLineOptions, NULL)) != -1) {
+            // Check if arguments are missing. Every option requires an argument.
+            if (optarg != NULL && optarg[0] == '-') {
+                Log_Debug("Warning: Option %c requires an argument\n", option);
+                continue;
+            }
+            switch (option) {
+            case 'c':
+                Log_Debug("ConnectionType: %s\n", optarg);
+                if (strcmp(optarg, "DPS") == 0) {
+                    connectionType = ConnectionType_DPS;
+                } else if (strcmp(optarg, "Direct") == 0) {
+                    connectionType = ConnectionType_Direct;
+                }
+                break;
+            case 's':
+                Log_Debug("ScopeID: %s\n", optarg);
+                scopeId = optarg;
+                break;
+            case 'h':
+                Log_Debug("Hostname: %s\n", optarg);
+                hubHostName = optarg;
+                break;
+            case 'd':
+                Log_Debug("DeviceID: %s\n", optarg);
+                deviceId = optarg;
+                break;
+            default:
+                // Unknown options are ignored.
+                break;
+            }
+        }
+    }
+}
+
+/// <summary>
+///     Validates if the values of the Scope ID, IotHub Hostname and Device ID were set.
+/// </summary>
+/// <returns>ExitCode_Success if the parameters were provided; otherwise another
+/// ExitCode value which indicates the specific failure.</returns>
+static ExitCode ValidateUserConfiguration(void)
+{
+    ExitCode validationExitCode = ExitCode_Success;
+
+    if (connectionType < ConnectionType_DPS || connectionType > ConnectionType_Direct) {
+        validationExitCode = ExitCode_Validate_ConnectionType;
+    }
+
+    if (connectionType == ConnectionType_DPS) {
+        if (scopeId == NULL) {
+            validationExitCode = ExitCode_Validate_ScopeId;
+        } else {
+            Log_Debug("Using DPS Connection: Azure IoT DPS Scope ID %s\n", scopeId);
+        }
+    }
+
+    if (connectionType == ConnectionType_Direct) {
+        if (hubHostName == NULL) {
+            validationExitCode = ExitCode_Validate_IotHubHostname;
+        } else if (deviceId == NULL) {
+            validationExitCode = ExitCode_Validate_DeviceId;
+        }
+        if (deviceId != NULL) {
+            // Validate that device ID is in lowercase.
+            size_t len = strlen(deviceId);
+            for (size_t i = 0; i < len; i++) {
+                if (isupper(deviceId[i])) {
+                    Log_Debug("Device ID must be in lowercase.\n");
+                    return ExitCode_Validate_DeviceId;
+                }
+            }
+        }
+        if (validationExitCode == ExitCode_Success) {
+            Log_Debug("Using Direct Connection: Azure IoT Hub Hostname %s\n", hubHostName);
+        }
+    }
+
+    if (validationExitCode != ExitCode_Success) {
+        Log_Debug("Command line arguments for application shoud be set as below\n%s",
+                  cmdLineArgsUsageText);
+    }
+    return validationExitCode;
 }
 
 static void WatchdogEventHandler(EventLoopTimer *timer)
@@ -392,6 +570,180 @@ void LedEventHandler(EventLoopTimer *timer)
 }
 
 /// <summary>
+///     This function matches the SysEvent_EventsCallback signature, and is invoked 
+///     from the event loop when the system wants to perform an application or system update.
+///     See <see cref="SysEvent_EventsCallback" /> for information about arguments.
+/// </summary>
+static void UpdateCallback(SysEvent_Events event, SysEvent_Status status, const SysEvent_Info *info,
+                           void *context)
+{
+    if (event != SysEvent_Events_UpdateReadyForInstall) {
+        Log_Debug("ERROR: unexpected event: 0x%x\n", event);
+        exitCode = ExitCode_UpdateCallback_UnexpectedEvent;
+        return;
+    }
+
+    // Print information about received message.
+    Log_Debug("INFO: Status: %s (%u)\n", EventStatusToString(status), status);
+
+    int result;
+
+    SysEvent_Info_UpdateData data;
+    DeferredUpdateConfig deferTime;
+    static char updateInfo[128] = { 0 };
+    uint32_t timeStamp = IoT_CentralLib_GetTmeStamp();
+
+    switch (status) {
+        // If an update is pending, and the user has not allowed updates, then defer the update.
+    case SysEvent_Status_Pending:
+        result = SysEvent_Info_GetUpdateData(info, &data);
+
+        if (result == -1) {
+            Log_Debug("ERROR: SysEvent_Info_GetUpdateData failed: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_UpdateCallback_GetUpdateEvent;
+            return;
+        }
+
+        if (data.update_type == SysEvent_UpdateType_App && strlen(fwUpdate.starttime)
+            && strlen(fwUpdate.endtime) && strlen(fwUpdate.timezone) ) {
+            deferTime = fwUpdate;
+        } else if (data.update_type == SysEvent_UpdateType_System && strlen(osUpdate.starttime)
+                 && strlen(osUpdate.endtime) && strlen(osUpdate.timezone) ) {
+            deferTime = osUpdate;
+        } else if (updateDeferring == false){
+            result = SysEvent_DeferEvent(SysEvent_Events_UpdateReadyForInstall, 1);
+            if (result == -1) {
+                Log_Debug("ERROR: SysEvent_DeferEvent: %s (%d).\n", strerror(errno), errno);
+                exitCode = ExitCode_UpdateCallback_DeferEvent;
+            }
+            return;
+        } else {
+            return;
+        }
+        Log_Debug("INFO: Update Type: %s (%u).\n", UpdateTypeToString(data.update_type),
+                data.update_type);
+        result = setenv("TZ", deferTime.timezone, 1);
+        if (result == -1) {
+            Log_Debug("ERROR: setenv failed with error code: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_Main_SetEnv;
+        }
+        int deferMin = 0;
+        char timeBuf[64];
+        time_t t, startTime_t, endTime_t;
+        time(&t);
+        struct tm tm = *localtime(&t);
+        if (strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %T %Z", &tm) != 0) {
+                Log_Debug("INFO: Received update event: %s\n", timeBuf);
+        }
+
+        struct tm startTm = tm;
+        struct tm endTm = tm;
+        int hour, min;
+        sscanf(deferTime.starttime, "%d:%d", &hour, &min);
+        startTm.tm_hour = hour;
+        startTm.tm_min = min;
+        startTime_t = mktime(&startTm);
+        if (t > startTime_t) {
+            sscanf(deferTime.endtime, "%d:%d", &hour, &min);
+            endTm.tm_hour = hour;
+            endTm.tm_min = min;
+            endTime_t = mktime(&endTm);
+            if (t < endTime_t) {
+                break;
+            }
+            startTm.tm_mday += 1;
+            startTime_t = mktime(&startTm);
+        }
+        deferMin = (int)(difftime(startTime_t, t) / 60);
+        if (deferMin == 0) {
+            return;
+        }
+
+        result = SysEvent_DeferEvent(SysEvent_Events_UpdateReadyForInstall, deferMin);
+        if (result == -1) {
+            Log_Debug("ERROR: SysEvent_DeferEvent: %s (%d).\n", strerror(errno), errno);
+            exitCode = ExitCode_UpdateCallback_DeferEvent;
+        }
+        Log_Debug("INFO: Deferring update for %d minute.\n", deferMin);
+        if (strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %T %Z", &startTm) != 0) {
+            Log_Debug("INFO: Update scheduled: %s\n", timeBuf);
+            snprintf(updateInfo, sizeof(updateInfo),
+            "{ \"UpdateInformation\": \"Update scheduled %s.\" }", timeBuf);
+            IoT_CentralLib_SendTelemetry(updateInfo, &timeStamp);
+        }
+        break;
+
+    case SysEvent_Status_Final:
+        Log_Debug("INFO: Final update. App will update in 10 seconds.\n");
+        result = SysEvent_Info_GetUpdateData(info, &data);
+        if (result != -1) {
+            snprintf(updateInfo, sizeof(updateInfo),
+            "{ \"UpdateInformation\": \"%s updated.\" }", UpdateTypeToString(data.update_type));
+            IoT_CentralLib_SendTelemetry(updateInfo, &timeStamp);
+            IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
+        }
+        // Terminate app before it is forcibly shut down and replaced.
+        // The application may be restarted before the update is applied.
+        exitCode = ExitCode_UpdateCallback_FinalUpdate;
+        break;
+
+    case SysEvent_Status_Deferred:
+        Log_Debug("INFO: Update deferred.\n");
+        break;
+
+    case SysEvent_Status_Complete:
+    default:
+        Log_Debug("ERROR: Unexpected status %d.\n", status);
+        exitCode = ExitCode_UpdateCallback_UnexpectedStatus;
+        break;
+    }
+
+    Log_Debug("\n");
+}
+
+/// <summary>
+///     Convert the supplied system event status to a human-readable string.
+/// </summary>
+/// <param name="status">The status.</param>
+/// <returns>String representation of the supplied status.</param>
+static const char *EventStatusToString(SysEvent_Status status)
+{
+    switch (status) {
+    case SysEvent_Status_Invalid:
+        return "Invalid";
+    case SysEvent_Status_Pending:
+        return "Pending";
+    case SysEvent_Status_Final:
+        return "Final";
+    case SysEvent_Status_Deferred:
+        return "Deferred";
+    case SysEvent_Status_Complete:
+        return "Completed";
+    default:
+        return "Unknown";
+    }
+}
+
+/// <summary>
+///     Convert the supplied update type to a human-readable string.
+/// </summary>
+/// <param name="updateType">The update type.</param>
+/// <returns>String representation of the supplied update type.</param>
+static const char *UpdateTypeToString(SysEvent_UpdateType updateType)
+{
+    switch (updateType) {
+    case SysEvent_UpdateType_Invalid:
+        return "Invalid";
+    case SysEvent_UpdateType_App:
+        return "Application";
+    case SysEvent_UpdateType_System:
+        return "System";
+    default:
+        return "Unknown";
+    }
+}
+
+/// <summary>
 ///     Set up SIGTERM termination handler, initialize peripherals, and set up event handlers.
 /// </summary>
 /// <returns>ExitCode_Success if all resources were allocated successfully; otherwise another
@@ -423,6 +775,13 @@ static ExitCode InitPeripheralsAndHandlers(void)
         CreateEventLoopPeriodicTimer(eventLoop, &AzureTimerEventHandler, &azureTelemetryPeriod);
     if (azureTimer == NULL) {
         return ExitCode_Init_AzureTimer;
+    }
+
+    updateEventReg = SysEvent_RegisterForEventNotifications(
+        eventLoop, SysEvent_Events_UpdateReadyForInstall, UpdateCallback, NULL);
+    if (updateEventReg == NULL) {
+        Log_Debug("ERROR: could not register update event: %s (%d).\n", strerror(errno), errno);
+        return ExitCode_SetUpSysEvent_RegisterEvent;
     }
 
     // LED
@@ -457,6 +816,9 @@ static void ClosePeripheralsAndHandlers(void)
     DisposeEventLoopTimer(azureTimer);
     DisposeEventLoopTimer(watchdogLoopTimer);
     DisposeEventLoopTimer(ledEventLoopTimer);
+
+    SysEvent_UnregisterForEventNotifications(updateEventReg);
+
     EventLoop_Close(eventLoop);
 }
 
@@ -479,11 +841,7 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
             cactusphere_error_notify(RE_CONNECT_IOTC);
         }
 
-        int ret;
-        Log_Debug("Getting EEPROM information.\n");
-        ret = GetEepromProperty(&eeprom);
-        if (ret < 0) {
-            ct_error = -EEPROM_READ_ERROR;
+        if (ct_error == -EEPROM_READ_ERROR) {
             gLedState = LED_BLINK;
             cactusphere_error_notify(EEPROM_READ_ERROR);
             exitCode = ExitCode_TermHandler_SigTerm;
@@ -561,16 +919,18 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
 /// </summary>
 static void SetupAzureClient(void)
 {
+    bool isAzureClientSetupSuccessful = false;
+
     if (iothubClientHandle != NULL)
         IoTHubDeviceClient_LL_Destroy(iothubClientHandle);
 
-    AZURE_SPHERE_PROV_RETURN_VALUE provResult =
-        IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning(scopeId, 10000,
-                                                                          &iothubClientHandle);
-    Log_Debug("IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning returned '%s'.\n",
-              getAzureSphereProvisioningResultString(provResult));
+    if (connectionType == ConnectionType_Direct) {
+        isAzureClientSetupSuccessful = SetupAzureIoTHubClientWithDaa();
+    } else if (connectionType == ConnectionType_DPS) {
+        isAzureClientSetupSuccessful = SetupAzureIoTHubClientWithDps();
+    }
 
-    if (provResult.result != AZURE_SPHERE_PROV_RESULT_OK) {
+    if (!isAzureClientSetupSuccessful) {
         gLedState = LED_BLINK;
 
         // If we fail to connect, reduce the polling frequency, starting at
@@ -614,6 +974,57 @@ static void SetupAzureClient(void)
 }
 
 /// <summary>
+///     Sets up the Azure IoT Hub connection (creates the iothubClientHandle)
+///     with DAA
+/// </summary>
+static bool SetupAzureIoTHubClientWithDaa(void)
+{
+    // Set up auth type
+    int retError = iothub_security_init(IOTHUB_SECURITY_TYPE_X509);
+    if (retError != 0) {
+        Log_Debug("ERROR: iothub_security_init failed with error %d.\n", retError);
+        return false;
+    }
+
+    // Create Azure Iot Hub client handle
+    iothubClientHandle =
+        IoTHubDeviceClient_LL_CreateFromDeviceAuth(hubHostName, deviceId, MQTT_Protocol);
+
+    if (iothubClientHandle == NULL) {
+        Log_Debug("IoTHubDeviceClient_LL_CreateFromDeviceAuth returned NULL.\n");
+        return false;
+    }
+
+    // Enable DAA cert usage when x509 is invoked
+    if (IoTHubDeviceClient_LL_SetOption(iothubClientHandle, "SetDeviceId",
+                                        &deviceIdForDaaCertUsage) != IOTHUB_CLIENT_OK) {
+        Log_Debug("ERROR: Failure setting Azure IoT Hub client option \"SetDeviceId\".\n");
+        return false;
+    }
+
+    return true;
+}
+
+/// <summary>
+///     Sets up the Azure IoT Hub connection (creates the iothubClientHandle)
+///     with DPS
+/// </summary>
+static bool SetupAzureIoTHubClientWithDps(void)
+{
+    AZURE_SPHERE_PROV_RETURN_VALUE provResult =
+        IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning(scopeId, 10000,
+                                                                          &iothubClientHandle);
+    Log_Debug("IoTHubDeviceClient_LL_CreateWithAzureSphereDeviceAuthProvisioning returned '%s'.\n",
+              getAzureSphereProvisioningResultString(provResult));
+
+    if (provResult.result != AZURE_SPHERE_PROV_RESULT_OK) {
+        return false;
+    }
+
+    return true;
+}
+
+/// <summary>
 ///    Send property response.
 /// </summary>
 #define JSON_FORMAT_NUM 50
@@ -624,7 +1035,7 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
     char* propertyStr = NULL;
     size_t propertyStr_len = 0;
-    
+
     if (! vector_is_empty(Send_PropertyItem)) {
         ResponsePropertyItem* curs = (ResponsePropertyItem*)vector_get_data(Send_PropertyItem);
         for (int i = 0; i < vector_size(Send_PropertyItem); i++){
@@ -671,6 +1082,61 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     }
 }
 
+static void ParseDeferredUpdateConfig(json_value* json,
+    DeferredUpdateConfig* config, const char* key, vector item)
+{
+    if (json->type != json_string) {
+        json = json_GetKeyJson("value", json);
+    }
+    PropertyItems_AddItem(item, key, TYPE_STR, json->u.string.ptr);
+    json = json_parse(json->u.string.ptr, json->u.string.length);
+
+    for (unsigned int i = 0; i < json->u.object.length; i++) {
+        char* propertyName = json->u.object.values[i].name;
+        json_value* item = json->u.object.values[i].value;
+
+        if (0 == strcmp(propertyName, "start")) {
+            strncpy(config->starttime, item->u.string.ptr, item->u.string.length);
+        } else if (0 == strcmp(propertyName, "end")) {
+            strncpy(config->endtime, item->u.string.ptr, item->u.string.length);
+        } else if (0 == strcmp(propertyName, "timezone")) {
+             strncpy(config->timezone, item->u.string.ptr, item->u.string.length);
+        }
+    }
+}
+
+static bool CheckDeferredUpdateConfig(const unsigned char* payload,
+    unsigned int payloadSize, vector item)
+{
+    json_value* jsonObj = json_parse(payload, payloadSize);
+    json_value* desiredObj = NULL;
+    json_value* osUpdateObj = NULL;
+    json_value* fwUpdateObj = NULL;
+    bool ret = false;
+
+    updateDeferring = true;
+    Log_Debug("payload=%s", payload);
+    desiredObj = json_GetKeyJson("desired", jsonObj);
+    if (desiredObj == NULL) {
+        osUpdateObj = json_GetKeyJson("OSUpdateTime", jsonObj);
+        fwUpdateObj = json_GetKeyJson("FWUpdateTime", jsonObj);
+    } else {
+        osUpdateObj = json_GetKeyJson("OSUpdateTime", desiredObj);
+        fwUpdateObj = json_GetKeyJson("FWUpdateTime", desiredObj);
+    }
+    if (osUpdateObj != NULL) {
+        ParseDeferredUpdateConfig(osUpdateObj, &osUpdate, "OSUpdateTime", item);
+        ret = true;
+    }
+
+    if (fwUpdateObj != NULL) {
+        ParseDeferredUpdateConfig(fwUpdateObj, &fwUpdate, "FWUpdateTime", item);
+        ret = true;
+    }
+
+    return ret;
+}
+
 /// <summary>
 ///     Callback invoked when a Device Twin update is received from IoT Hub.
 ///     Updates local state for 'showEvents' (bool).
@@ -679,15 +1145,20 @@ static void SendPropertyResponse(vector Send_PropertyItem)
 /// <param name="payloadSize">size of the Device Twin JSON document</param>
 static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payload,
                          size_t payloadSize, void *userContextCallback)
-{   
+{
     if (ct_error < 0) {
         return;
     }
 
     vector Send_PropertyItem = vector_init(sizeof(ResponsePropertyItem));
 
+    bool defupderr = CheckDeferredUpdateConfig(payload, payloadSize, Send_PropertyItem);
+
 #ifdef USE_MODBUS
     SphereWarning err = ModbusConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    if (defupderr && err == UNSUPPORTED_PROPERTY) {
+        err = NO_ERROR;
+    }
     switch (err)
     {
     case NO_ERROR:
@@ -695,7 +1166,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         DataFetchScheduler_Init(
             mTelemetrySchedulerArr[MODBUS_RTU],
             ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
-        
+
         if (err == NO_ERROR) {
             gLedState = LED_ON;
         } else { // ILLEGAL_PROPERTY
@@ -730,6 +1201,9 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
 #ifdef USE_DI
     SphereWarning err = DI_ConfigMgr_LoadAndApplyIfChanged(payload, payloadSize, Send_PropertyItem);
+    if (defupderr && err == UNSUPPORTED_PROPERTY) {
+        err = NO_ERROR;
+    }
     switch (err)
     {
     case NO_ERROR:
@@ -776,7 +1250,7 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
 static int CommandCallback(const char* method_name, const unsigned char* payload, size_t size,
     unsigned char** response, size_t* response_size, void* userContextCallback) {
-    
+
     if (ct_error < 0) {
         goto end;
     }
@@ -788,7 +1262,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     static const char* ReportMsgTemplate = "{ \"ModbusWriteRegisterResult\": \"%s\" }";
 
     ModbusOneshotcommand(payload, size, deviceMethodResponse);
-    
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
@@ -798,7 +1272,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
     snprintf(reportedPropertiesString, sizeof(reportedPropertiesString), ReportMsgTemplate, deviceMethodResponse);
     IoT_CentralLib_SendProperty(reportedPropertiesString);
 #endif
-    
+
 #ifdef USE_DI
     const char ClearCounterDIKey[] = "ClearCounter_DI";
     const size_t ClearCounterDiLen = strlen(ClearCounterDIKey);
@@ -809,7 +1283,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
         if (pinId < 0) {
             goto err;
         }
-        
+
         if (0 != strncmp(payload, "null", strlen("null"))) {
             char *cmdPayload = (char *)calloc(size + 1, sizeof(char));
             if (NULL == cmdPayload) {
@@ -817,7 +1291,7 @@ static int CommandCallback(const char* method_name, const unsigned char* payload
             }
             strncpy(cmdPayload, payload, size);
             uint64_t initVal = strtoull(cmdPayload, NULL, 10);
-            
+
             if (initVal > 0x7FFFFFFF) {
                 free(cmdPayload);
                 goto err_value;
@@ -841,8 +1315,8 @@ err_value:
     } else {
 err:
         strcpy(deviceMethodResponse, "\"Error\"");
-    }    
-            
+    }
+
     // send result
     *response_size = strlen(deviceMethodResponse);
     *response = malloc(*response_size);
