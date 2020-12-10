@@ -74,3 +74,6 @@ https://armadillo.atmark-techno.com/resources/documents/cactusphere/manuals
 |接点入力モデル|HLApp/Cactusphere_100/atmarktechno_DI_model/app_manifest.json|
 |RS485モデル|HLApp/Cactusphere_100/atmarktechno_RS485_model/app_manifest.json|
 
+## ツール
+
+[Azure Sphere Explorer](https://github.com/KMOGAKI/Cactusphere-100/tree/explorer_rc-1/Tools/AzureSphereExplorer)
