@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "ModbusDevRTU.h"
 #include "ModbusDevConfig.h"
@@ -129,6 +130,15 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     return rc;
 }
 
+long ModbusDevRTU_CreateInterval(ModbusCtx* me) {
+    int data = 8;
+    long interval = 3.5 * 1000000000 * (1 + data
+                  + (me->parity == PARITY_NONE ? 0 : 1)
+                  + me->stop) / me->baud;
+
+    return interval;
+}
+
 // Read register
 bool
 ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length) {
@@ -150,6 +160,9 @@ ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned sho
     msg->header.messageLen = sizeof(msg->body.writeAndReadReq.writeLen)
         + sizeof(msg->body.writeAndReadReq.readLen)
         + msg->body.writeAndReadReq.writeLen;
+
+    const struct timespec silentInterval = {.tv_sec = 0, .tv_nsec = ModbusDevRTU_CreateInterval(me)};
+    nanosleep(&silentInterval, NULL);
 
     rc = SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, 
         (long)(sizeof(msg->header) + msg->header.messageLen),
@@ -240,6 +253,9 @@ ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned sh
     msg->header.messageLen = sizeof(msg->body.writeAndReadReq.writeLen)
         + sizeof(msg->body.writeAndReadReq.readLen)
         + msg->body.writeAndReadReq.writeLen;
+
+    const struct timespec silentInterval = {.tv_sec = 0, .tv_nsec = ModbusDevRTU_CreateInterval(me)};
+    nanosleep(&silentInterval, NULL);
 
     rc = SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, 
         (long)(sizeof(msg->header) + msg->header.messageLen),
