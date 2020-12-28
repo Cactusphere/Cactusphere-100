@@ -51,7 +51,7 @@ if(PRODUCT STREQUAL "atmarktechno_RS485_model")
     )
     file(GLOB RS485_SRC RS485/*.c)
     set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC} ${RS485_SRC})
-    set(APP_VERSION "20.10-v1.0.0")
+    set(APP_VERSION "20.10-v1.0.1")
 endif()
 
 # App Version
