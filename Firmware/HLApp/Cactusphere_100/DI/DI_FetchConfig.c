@@ -40,12 +40,13 @@ struct DI_FetchConfig {
 };
 
 // key Items in JSON
-const char CounterDIKey[] = "Counter_DI";
-const char CntIsPulseHighDIKey[] = "cntIsPulseHigh_DI";
-const char CntIntervalDIKey[] = "cntInterval_DI";
+const char CounterDIKey[]          = "Counter_DI";
+const char CntIsPulseHighDIKey[]   = "cntIsPulseHigh_DI";
+const char CntIntervalDIKey[]      = "cntInterval_DI";
 const char CntMinPulseWidthDIKey[] = "cntMinPulseWidth_DI";
 const char CntMaxPulseCountDIKey[] = "cntMaxPulseCount_DI";
-const char PollIntervalDIKey[] = "pollInterval_DI";
+const char PollIsActiveHighKey[]   = "pollIsActiveHigh_DI";
+const char PollIntervalDIKey[]     = "pollInterval_DI";
 
 #define DI_FETCH_PORT_OFFSET 1
 
@@ -88,20 +89,21 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
     const json_value* json, bool desire, vector propertyItem, const char* version)
 {
     DI_FetchItem config[NUM_DI] = {
-        // telemetryName, intervalSec, pinID, isPulseCounter, isPulseHigh, isCountClear, minPulseWidth, maxPulseCount
-        {"", 1, 0, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, 1, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, 2, false, false, false, 200, 0x7FFFFFFF},
-        {"", 1, 3, false, false, false, 200, 0x7FFFFFFF}
+        // telemetryName, intervalSec, pinID, isPulseCounter, isCountClear, isPulseHigh, isPollingActiveHigh, minPulseWidth, maxPulseCount
+        {"", 1, 0, false, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 1, false, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 2, false, false, false, false, 200, 0x7FFFFFFF},
+        {"", 1, 3, false, false, false, false, 200, 0x7FFFFFFF}
     };
     bool overWrite[NUM_DI] = {false};
     bool ret = true;
 
-    const size_t cntIsPulseHighDiLen = strlen(CntIsPulseHighDIKey);
-    const size_t cntIntervalDiLen = strlen(CntIntervalDIKey);
+    const size_t cntIsPulseHighDiLen   = strlen(CntIsPulseHighDIKey);
+    const size_t cntIntervalDiLen      = strlen(CntIntervalDIKey);
     const size_t cntMinPulseWidthDiLen = strlen(CntMinPulseWidthDIKey);
     const size_t cntMaxPulseCountDiLen = strlen(CntMaxPulseCountDIKey);
-    const size_t pollIntervalDiLen = strlen(PollIntervalDIKey);
+    const size_t pollIsActiveHighDiLen = strlen(PollIsActiveHighKey);
+    const size_t pollIntervalDiLen     = strlen(PollIntervalDIKey);
 
     char diCounterStr[PROPERTY_NAME_MAX_LEN];
     char diPollingStr[PROPERTY_NAME_MAX_LEN];
@@ -292,6 +294,23 @@ DI_FetchConfig_LoadFromJSON(DI_FetchConfig* me,
                 }
             }
             PropertyItems_AddItem(propertyItem, propertyName, TYPE_NUM, value);
+        } else if (0 == strncmp(propertyName, PollIsActiveHighKey, pollIsActiveHighDiLen)) {
+            pinid = strtol(&propertyName[pollIsActiveHighDiLen], NULL, 10) - DI_FETCH_PORT_OFFSET;
+            if (pinid < 0) {
+                continue;
+            }
+            bool value;
+            if (!config[pinid].isPulseCounter) {
+                if (json_GetBoolValue(item,&value)) {
+                    if (config[pinid].isPollingActiveHigh != value) {
+                        config[pinid].isCountClear = true;
+                    }
+                    config[pinid].isPollingActiveHigh = value;
+                } else {
+                    ret = false;
+                }
+            }
+            PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, value);
         }
     }
 
