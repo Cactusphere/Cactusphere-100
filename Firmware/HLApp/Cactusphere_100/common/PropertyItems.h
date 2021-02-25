@@ -36,6 +36,7 @@ typedef enum {
     TYPE_STR,
     TYPE_NUM,
     TYPE_BOOL,
+    TYPE_NULL,
 } PropertyType;
 
 typedef struct ResponsePropertyItem {

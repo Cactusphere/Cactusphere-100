@@ -93,11 +93,11 @@ void PropertyItems_AddItem(
         if ((value = va_arg(args, char *)) == NULL) {
             goto err;
         }
-
         if ((pseudo.value.str = PropertyItems_ReplaceString(value)) == NULL) {
             goto err;
         }
-
+        break;
+    case TYPE_NULL:
         break;
     default:
         goto err;
