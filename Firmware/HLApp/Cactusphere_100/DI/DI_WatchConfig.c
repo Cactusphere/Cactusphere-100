@@ -121,8 +121,7 @@ DI_WatchConfig_LoadFromJSON(DI_WatchConfig* me,
         json_value* item = json->u.object.values[i].value;
 
         if (0 == strncmp(propertyName, EdgeDIKey, edgeDiLen)) {
-            pinid = strtol(&propertyName[edgeDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET;
-            if (pinid < 0) {
+            if ((pinid = strtol(&propertyName[edgeDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET) < 0) {
                 continue;
             }
             bool value;
@@ -138,21 +137,16 @@ DI_WatchConfig_LoadFromJSON(DI_WatchConfig* me,
                 ret = false;
             }
         } else if(0 == strncmp(propertyName, EdgeNotifyIsHighDIKey, notifyHighDiLen)) {
-            pinid = strtol(&propertyName[notifyHighDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET;
-            if (pinid < 0) {
+            if ((pinid = strtol(&propertyName[notifyHighDiLen], NULL, 10) - DI_WATCH_PORT_OFFSET) < 0) {
                 continue;
             }
             bool value;
             if (json_GetBoolValue(item, &value)) {
-                if (config[pinid].notifyChangeForHigh != value) {
-                    // value has changed
-                    config[pinid].isCountClear = true;
-                }
+                config[pinid].isCountClear = (config[pinid].notifyChangeForHigh != value) ? true : false;
                 config[pinid].notifyChangeForHigh = value;
                 PropertyItems_AddItem(propertyItem, propertyName, TYPE_BOOL, config[pinid].notifyChangeForHigh);
             } else {
-                ret = false;
-                overWrite[pinid] = false;
+                ret = overWrite[pinid] = false;
             }
         }
     }

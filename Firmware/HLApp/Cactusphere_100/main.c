@@ -1033,6 +1033,7 @@ static void SendPropertyResponse(vector Send_PropertyItem)
     static const char* EventMsgTemplate_bool = "{ \"%s\": %s }";
     static const char* EventMsgTemplate_num  = "{ \"%s\": %u }";
     static const char* EventMsgTemplate_str  = "{ \"%s\": \"%s\" }";
+    static const char* EventMsgTemplate_null = "{ \"%s\": null }";
     char* propertyStr = NULL;
     size_t propertyStr_len = 0;
 
@@ -1069,6 +1070,15 @@ static void SendPropertyResponse(vector Send_PropertyItem)
                 }
                 free(curs->value.str);
                 break;
+            case TYPE_NULL:
+                propertyStr_len = strlen(curs->propertyName) + JSON_FORMAT_NUM;
+                propertyStr = (char *)malloc(propertyStr_len);
+                if (propertyStr) {
+                    memset(propertyStr, 0, propertyStr_len);
+                    snprintf(propertyStr, propertyStr_len, EventMsgTemplate_null,
+                             curs->propertyName, curs->value.ul);
+                }
+                break;
             default:
                 continue;
             }
@@ -1085,6 +1095,10 @@ static void SendPropertyResponse(vector Send_PropertyItem)
 static void ParseDeferredUpdateConfig(json_value* json,
     DeferredUpdateConfig* config, const char* key, vector item)
 {
+    if (! json) {
+        return;
+    }
+
     if (json->type != json_string) {
         json = json_GetKeyJson("value", json);
     }
@@ -1113,6 +1127,7 @@ static bool CheckDeferredUpdateConfig(const unsigned char* payload,
     json_value* osUpdateObj = NULL;
     json_value* fwUpdateObj = NULL;
     bool ret = false;
+    bool doResume = false;
 
     updateDeferring = true;
     Log_Debug("payload=%s", payload);
@@ -1124,14 +1139,29 @@ static bool CheckDeferredUpdateConfig(const unsigned char* payload,
         osUpdateObj = json_GetKeyJson("OSUpdateTime", desiredObj);
         fwUpdateObj = json_GetKeyJson("FWUpdateTime", desiredObj);
     }
+
     if (osUpdateObj != NULL) {
-        ParseDeferredUpdateConfig(osUpdateObj, &osUpdate, "OSUpdateTime", item);
+        if (osUpdateObj->type == json_null) {
+            memset(&osUpdate, 0, sizeof(DeferredUpdateConfig));
+            doResume = true;
+        } else {
+            ParseDeferredUpdateConfig(osUpdateObj, &osUpdate, "OSUpdateTime", item);
+        }
         ret = true;
     }
 
     if (fwUpdateObj != NULL) {
-        ParseDeferredUpdateConfig(fwUpdateObj, &fwUpdate, "FWUpdateTime", item);
+        if (fwUpdateObj->type == json_null) {
+            memset(&fwUpdate, 0, sizeof(DeferredUpdateConfig));
+            doResume = true;
+        } else {
+            ParseDeferredUpdateConfig(fwUpdateObj, &fwUpdate, "FWUpdateTime", item);
+        }
         ret = true;
+    }
+
+    if (doResume) {
+        SysEvent_ResumeEvent(SysEvent_Events_UpdateReadyForInstall);
     }
 
     return ret;

@@ -109,6 +109,10 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         vector_clear(me->mFetchItems);
     }
 
+    if (json->type == json_null) {
+        goto end;
+    }
+
     for (unsigned int i = 0, n = json->u.object.length; i < n; ++i) {
         if (0 == strcmp(ModbusTelemetryConfigKey, json->u.object.values[i].name)) {
             configJson = json->u.object.values[i].value;

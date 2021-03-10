@@ -83,38 +83,47 @@ ModbusConfigMgr_LoadAndApplyIfChanged(const unsigned char* payload,
     }
 
     if (modbusConfObj != NULL) {
-        if (modbusConfObj->type != json_string) {
-            modbusConfObj = json_GetKeyJson("value", modbusConfObj);
-        }
-        PropertyItems_AddItem(item, "ModbusDevConfig", TYPE_STR, modbusConfObj->u.string.ptr);
-        modbusConfObj = json_parse(modbusConfObj->u.string.ptr, modbusConfObj->u.string.length);
-        if (modbusConfObj != NULL) {
+        if (modbusConfObj->type == json_null) {
+            PropertyItems_AddItem(item, "ModbusDevConfig", TYPE_NULL);
             Libmodbus_ModbusDevClear();
-            if (!Libmodbus_LoadFromJSON(modbusConfObj)) {
-                Log_Debug("ModbusDevConfig LoadToJsonError!\n");
+        } else {
+            if (modbusConfObj->type != json_string) {
+                modbusConfObj = json_GetKeyJson("value", modbusConfObj);
+            }
+            PropertyItems_AddItem(item, "ModbusDevConfig", TYPE_STR, modbusConfObj->u.string.ptr);
+            modbusConfObj = json_parse(modbusConfObj->u.string.ptr, modbusConfObj->u.string.length);
+            if (modbusConfObj != NULL) {
+                Libmodbus_ModbusDevClear();
+                if (!Libmodbus_LoadFromJSON(modbusConfObj)) {
+                    Log_Debug("ModbusDevConfig LoadToJsonError!\n");
+                    ret = ILLEGAL_PROPERTY;
+                }
+            } else {
+                Log_Debug("ModbusDevConfig parse error!\n");
                 ret = ILLEGAL_PROPERTY;
             }
-        }
-        else {
-            Log_Debug("ModbusDevConfig parse error!\n");
-            ret = ILLEGAL_PROPERTY;
         }
     }
 
     if (telemetryConfObj != NULL) {
-        if (telemetryConfObj->type != json_string) {
-            telemetryConfObj = json_GetKeyJson("value", telemetryConfObj);
-        }
-        PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_STR, telemetryConfObj->u.string.ptr);
-        telemetryConfObj = json_parse(telemetryConfObj->u.string.ptr, telemetryConfObj->u.string.length);
-        if (telemetryConfObj != NULL) {
-            if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0")) {
-                Log_Debug("ModbusTelemetryConfig LoadToJsonError!\n");
+        if (telemetryConfObj->type == json_null) {
+            PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_NULL);
+            ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0");
+        } else {
+            if (telemetryConfObj->type != json_string) {
+                telemetryConfObj = json_GetKeyJson("value", telemetryConfObj);
+            }
+            PropertyItems_AddItem(item, "ModbusTelemetryConfig", TYPE_STR, telemetryConfObj->u.string.ptr);
+            telemetryConfObj = json_parse(telemetryConfObj->u.string.ptr, telemetryConfObj->u.string.length);
+            if (telemetryConfObj != NULL) {
+                if (!ModbusFetchConfig_LoadFromJSON(sModbusConfigMgr.fetchConfig, telemetryConfObj, "1.0")) {
+                    Log_Debug("ModbusTelemetryConfig LoadToJsonError!\n");
+                    ret = ILLEGAL_PROPERTY;
+                }
+            } else {
+                Log_Debug("ModbusTelemetryConfig parse error!\n");
                 ret = ILLEGAL_PROPERTY;
             }
-        } else {
-            Log_Debug("ModbusTelemetryConfig parse error!\n");
-            ret = ILLEGAL_PROPERTY;
         }
     }
 
