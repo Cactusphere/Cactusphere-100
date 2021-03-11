@@ -82,6 +82,9 @@ typedef enum {
     ExitCode_Init_LedTimer = 9,
 
     ExitCode_SetUpSysEvent_EventLoop = 10,
+
+    ExitCode_InterfaceConnectionStatus_Failed = 16,
+
     ExitCode_SetUpSysEvent_RegisterEvent,
 
     ExitCode_UpdateCallback_UnexpectedEvent,
@@ -158,18 +161,35 @@ typedef enum {
     ConnectionType_Direct = 2
 } ConnectionType;
 
+/// <summary>
+/// Authentication state of the client with respect to the Azure IoT Hub.
+/// </summary>
+typedef enum {
+    /// <summary>Client is not authenticated by the Azure IoT Hub.</summary>
+    IoTHubClientAuthenticationState_NotAuthenticated = 0,
+    /// <summary>Client has initiated authentication to the Azure IoT Hub.</summary>
+    IoTHubClientAuthenticationState_AuthenticationInitiated = 1,
+    /// <summary>Client is authenticated by the Azure IoT Hub.</summary>
+    IoTHubClientAuthenticationState_Authenticated = 2
+} IoTHubClientAuthenticationState;
+
 // Azure IoT definitions.
 static char *scopeId = NULL;                                      // ScopeId for DPS.
 static char *hubHostName = NULL;                                  // Azure IoT Hub Hostname.
 static char *deviceId = NULL;                                     // Device ID must be in lowercase.
 static ConnectionType connectionType = ConnectionType_NotDefined; // Type of connection to use.
 
+static IoTHubClientAuthenticationState iotHubClientAuthenticationState =
+IoTHubClientAuthenticationState_NotAuthenticated; // Authentication state with respect to the
+                                                  // IoT Hub.
+
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
-static bool iothubAuthenticated = false;
 static bool iothubFirstConnected = false;
 static const int deviceIdForDaaCertUsage = 1; // A constant used to direct the IoT SDK to use
                                               // the DAA cert under the hood.
+static const char wlan_networkInterface[] = "wlan0";
+static const char eth_networkInterface[] = "eth0";
 
 // Application update events are received via an event loop.
 static EventRegistration *updateEventReg = NULL;
@@ -265,7 +285,7 @@ static void TerminationHandler(int signalNumber)
 bool
 IsAuthenticationDone(void)
 {
-    return iothubAuthenticated;
+    return (IoTHubClientAuthenticationState_Authenticated == iotHubClientAuthenticationState) ? true : false;
 }
 
 void SetupWatchdog(void)
@@ -397,19 +417,30 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
         return;
     }
 
-    bool isNetworkReady = false;
-    if (Networking_IsNetworkingReady(&isNetworkReady) != -1) {
-        if (! isNetworkReady) {
-            iothubAuthenticated = false;
-            gLedState = LED_BLINK;
-        } else if (! iothubAuthenticated) {
+    // Check whether the device is connected to the internet.
+    Networking_InterfaceConnectionStatus eth_status;
+    Networking_InterfaceConnectionStatus wlan_status;
+    int ret_eth_status = Networking_GetInterfaceConnectionStatus(eth_networkInterface, &eth_status);
+    int ret_wlan_status = Networking_GetInterfaceConnectionStatus(wlan_networkInterface, &wlan_status);
+
+    if ((ret_eth_status == 0 && (eth_status & Networking_InterfaceConnectionStatus_ConnectedToInternet)) ||
+        (ret_wlan_status == 0 && (wlan_status & Networking_InterfaceConnectionStatus_ConnectedToInternet))) {
+        if (iotHubClientAuthenticationState == IoTHubClientAuthenticationState_NotAuthenticated) {
             SetupAzureClient();
-            IoT_CentralLib_Initialize(
-                CACHE_BUF_SIZE, false);
+            IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
         }
-    } else {
-        Log_Debug("Failed to get Network state\n");
+        gLedState = LED_ON;
     }
+    else {
+        gLedState = LED_BLINK;
+        if (errno != EAGAIN) {
+            Log_Debug("ERROR: Networking_GetInterfaceConnectionStatus: %d (%s)\n", errno,
+                strerror(errno));
+            exitCode = ExitCode_InterfaceConnectionStatus_Failed;
+            return;
+        }
+    }
+
 
     if (ct_error < 0) {
         goto dowork;
@@ -424,7 +455,7 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
     }
 
 dowork:
-    if (iothubAuthenticated) {
+    if (iothubClientHandle != NULL) {
         IoTHubDeviceClient_LL_DoWork(iothubClientHandle);
     }
 }
@@ -830,7 +861,16 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
                                         IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason,
                                         void *userContextCallback)
 {
-    iothubAuthenticated = (result == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED);
+    Log_Debug("Azure IoT connection status: %s\n", GetReasonString(reason));
+
+    if (result != IOTHUB_CLIENT_CONNECTION_AUTHENTICATED) {
+        iotHubClientAuthenticationState = IoTHubClientAuthenticationState_NotAuthenticated;
+        gLedState = LED_BLINK;
+        return;
+    }
+
+    iotHubClientAuthenticationState = IoTHubClientAuthenticationState_Authenticated;
+
     Log_Debug("IoT Hub Authenticated: %s\n", GetReasonString(reason));
 
     if (reason == IOTHUB_CLIENT_CONNECTION_OK) {
@@ -958,7 +998,11 @@ static void SetupAzureClient(void)
     struct timespec azureTelemetryPeriod = {.tv_sec = azureIoTPollPeriodSeconds, .tv_nsec = 0};
     SetEventLoopTimerPeriod(azureTimer, &azureTelemetryPeriod);
 
-    iothubAuthenticated = true;
+    // Set client authentication state to initiated. This is done to indicate that
+    // SetUpAzureIoTHubClient() has been called (and so should not be called again) while the
+    // client is waiting for a response via the ConnectionStatusCallback().
+    iotHubClientAuthenticationState = IoTHubClientAuthenticationState_AuthenticationInitiated;
+
     gLedState = LED_ON;
 
     if (IoTHubDeviceClient_LL_SetOption(iothubClientHandle, OPTION_KEEP_ALIVE,
