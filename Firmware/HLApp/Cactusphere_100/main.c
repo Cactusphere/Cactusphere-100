@@ -429,7 +429,9 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
             SetupAzureClient();
             IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
         }
-        gLedState = LED_ON;
+        else if (iotHubClientAuthenticationState == IoTHubClientAuthenticationState_Authenticated) {
+            gLedState = LED_ON;
+        }
     }
     else {
         gLedState = LED_BLINK;
