@@ -193,7 +193,9 @@ DI_Lib_ReadRTAppVersion(char* rtAppVersion)
     msgSize = (int)(sizeof(msg->header) + msg->header.messageLen);
     ret = SendRTApp_SendMessageToRTCoreAndReadMessage((const unsigned char*)msg, msgSize,
         (unsigned char*)retMsg, sizeof(DI_ReturnMsg));
-    strncpy(rtAppVersion, retMsg->message.version, retMsg->messageLen);
+    if (ret) {
+        strncpy(rtAppVersion, retMsg->message.version, retMsg->messageLen);
+    }
 
     return ret;
 }
