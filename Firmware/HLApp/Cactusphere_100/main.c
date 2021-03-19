@@ -173,15 +173,25 @@ typedef enum {
     IoTHubClientAuthenticationState_Authenticated = 2
 } IoTHubClientAuthenticationState;
 
+/// <summary>
+/// Information such as the connection status to network and the reading status of EEPROM.
+/// (If even one is disabled, the Status LED will not turn on.)
+/// </summary>
+typedef struct {
+    bool isEepromReadSuccess;
+    bool isEepromDataValid;
+    IoTHubClientAuthenticationState IoTHubClientAuthState; // Authentication state with respect to the Azure IoT Hub.
+    bool isNetworkConnected;
+    bool isPropertySettingValid;
+} SphereStatus;
+
+SphereStatus sphereStatus = {false,false,IoTHubClientAuthenticationState_NotAuthenticated,false,false};
+
 // Azure IoT definitions.
 static char *scopeId = NULL;                                      // ScopeId for DPS.
 static char *hubHostName = NULL;                                  // Azure IoT Hub Hostname.
 static char *deviceId = NULL;                                     // Device ID must be in lowercase.
 static ConnectionType connectionType = ConnectionType_NotDefined; // Type of connection to use.
-
-static IoTHubClientAuthenticationState iotHubClientAuthenticationState =
-IoTHubClientAuthenticationState_NotAuthenticated; // Authentication state with respect to the
-                                                  // IoT Hub.
 
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
 static const int keepalivePeriodSeconds = 20;
@@ -217,11 +227,11 @@ const struct itimerspec watchdogInterval = { { 300, 0 },{ 300, 0 } };
 timer_t watchdogTimer;
 
 // Status LED
-enum {
+typedef enum {
     LED_OFF = 0,
     LED_ON,
     LED_BLINK,
-};
+} LED_Status;
 int gLedState = LED_OFF;
 int ledGpioFd = -1;
 
@@ -248,6 +258,7 @@ static ExitCode ValidateUserConfiguration(void);
 static void ParseCommandLineArguments(int argc, char *argv[]);
 static bool SetupAzureIoTHubClientWithDaa(void);
 static bool SetupAzureIoTHubClientWithDps(void);
+static bool ChangeLedStatus(LED_Status led_status);
 
 typedef struct
 {
@@ -285,7 +296,7 @@ static void TerminationHandler(int signalNumber)
 bool
 IsAuthenticationDone(void)
 {
-    return (IoTHubClientAuthenticationState_Authenticated == iotHubClientAuthenticationState) ? true : false;
+    return (IoTHubClientAuthenticationState_Authenticated == sphereStatus.IoTHubClientAuthState) ? true : false;
 }
 
 void SetupWatchdog(void)
@@ -305,6 +316,42 @@ void ExtendWatchdogExpiry(void)
     //check that application is operating normally
     //if so, reset the watchdog
     timer_settime(watchdogTimer, 0, &watchdogInterval, NULL);
+}
+
+/// <summary>
+/// Change the LED status.
+/// </summary>
+/// <returns>Returns false if the LED cannot be turned on.</returns>
+static bool ChangeLedStatus(LED_Status led_status)
+{
+    bool ret = true;
+    switch (led_status)
+    {
+    case LED_OFF:
+        gLedState = LED_OFF;
+        break;
+    case LED_BLINK:
+        gLedState = LED_BLINK;
+        break;
+    case LED_ON:
+        /// If even one value of "sphereStatus" is invalid, the LED cannot turn on.
+        if (sphereStatus.isEepromDataValid &&
+            sphereStatus.isNetworkConnected &&
+            sphereStatus.isEepromReadSuccess &&
+            sphereStatus.isPropertySettingValid &&
+            (IoTHubClientAuthenticationState_Authenticated == sphereStatus.IoTHubClientAuthState)) {
+            gLedState = LED_ON;
+        }
+        else {
+            gLedState = LED_BLINK;
+            ret = false;
+        }
+        break;
+    default:
+        ret = false;
+        break;
+    }
+    return ret;
 }
 
 /// <summary>
@@ -335,7 +382,11 @@ int main(int argc, char *argv[])
     err = GetEepromProperty(&eeprom);
     if (err < 0) {
         ct_error = -EEPROM_READ_ERROR;
-        gLedState = LED_BLINK;
+        sphereStatus.isEepromReadSuccess = false;
+        ChangeLedStatus(LED_BLINK);
+    }
+    else {
+        sphereStatus.isEepromReadSuccess = true;
     }
 
     static Networking_Interface_HardwareAddress ha;
@@ -425,14 +476,16 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
 
     if ((ret_eth_status == 0 && (eth_status & Networking_InterfaceConnectionStatus_ConnectedToInternet)) ||
         (ret_wlan_status == 0 && (wlan_status & Networking_InterfaceConnectionStatus_ConnectedToInternet))) {
-        if (iotHubClientAuthenticationState == IoTHubClientAuthenticationState_NotAuthenticated) {
+        if (sphereStatus.IoTHubClientAuthState == IoTHubClientAuthenticationState_NotAuthenticated) {
             SetupAzureClient();
             IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
         }
-        gLedState = LED_ON;
+        sphereStatus.isNetworkConnected = true;
+        ChangeLedStatus(LED_ON);
     }
     else {
-        gLedState = LED_BLINK;
+        sphereStatus.isNetworkConnected = false;
+        ChangeLedStatus(LED_BLINK);
         if (errno != EAGAIN) {
             Log_Debug("ERROR: Networking_GetInterfaceConnectionStatus: %d (%s)\n", errno,
                 strerror(errno));
@@ -832,7 +885,7 @@ static ExitCode InitPeripheralsAndHandlers(void)
     }
 
     // LED ON
-    gLedState = LED_ON;
+    ChangeLedStatus(LED_ON);
 
     return ExitCode_Success;
 }
@@ -864,12 +917,12 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
     Log_Debug("Azure IoT connection status: %s\n", GetReasonString(reason));
 
     if (result != IOTHUB_CLIENT_CONNECTION_AUTHENTICATED) {
-        iotHubClientAuthenticationState = IoTHubClientAuthenticationState_NotAuthenticated;
-        gLedState = LED_BLINK;
+        sphereStatus.IoTHubClientAuthState = IoTHubClientAuthenticationState_NotAuthenticated;
+        ChangeLedStatus(LED_BLINK);
         return;
     }
 
-    iotHubClientAuthenticationState = IoTHubClientAuthenticationState_Authenticated;
+    sphereStatus.IoTHubClientAuthState = IoTHubClientAuthenticationState_Authenticated;
 
     Log_Debug("IoT Hub Authenticated: %s\n", GetReasonString(reason));
 
@@ -882,7 +935,8 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
         }
 
         if (ct_error == -EEPROM_READ_ERROR) {
-            gLedState = LED_BLINK;
+            sphereStatus.isEepromReadSuccess = false;
+            ChangeLedStatus(LED_BLINK);
             cactusphere_error_notify(EEPROM_READ_ERROR);
             exitCode = ExitCode_TermHandler_SigTerm;
         } else {
@@ -906,7 +960,8 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
                 IoT_CentralLib_SendProperty(propertyStr);
             }
 
-            gLedState = LED_ON;
+            sphereStatus.isEepromReadSuccess = true;
+            ChangeLedStatus(LED_ON);
 
             static EventMsgData eepromProperty[] = {
                 {"SerialNumber", ""},
@@ -942,13 +997,17 @@ static void HubConnectionStatusCallback(IOTHUB_CLIENT_CONNECTION_STATUS result,
                 ct_error = -ILLEGAL_PACKAGE;
             }
             if (ct_error < 0) {
-                gLedState = LED_BLINK;
+                sphereStatus.isEepromDataValid = false;
+                ChangeLedStatus(LED_BLINK);
                 cactusphere_error_notify(ILLEGAL_PACKAGE);
                 exitCode = ExitCode_TermHandler_SigTerm;
             }
+            else {
+                sphereStatus.isEepromDataValid = true;
+            }
         }
     } else {
-        gLedState = LED_BLINK;
+        ChangeLedStatus(LED_BLINK);
     }
 }
 
@@ -971,7 +1030,7 @@ static void SetupAzureClient(void)
     }
 
     if (!isAzureClientSetupSuccessful) {
-        gLedState = LED_BLINK;
+        ChangeLedStatus(LED_BLINK);
 
         // If we fail to connect, reduce the polling frequency, starting at
         // AzureIoTMinReconnectPeriodSeconds and with a backoff up to
@@ -1001,9 +1060,9 @@ static void SetupAzureClient(void)
     // Set client authentication state to initiated. This is done to indicate that
     // SetUpAzureIoTHubClient() has been called (and so should not be called again) while the
     // client is waiting for a response via the ConnectionStatusCallback().
-    iotHubClientAuthenticationState = IoTHubClientAuthenticationState_AuthenticationInitiated;
+    sphereStatus.IoTHubClientAuthState = IoTHubClientAuthenticationState_AuthenticationInitiated;
 
-    gLedState = LED_ON;
+    ChangeLedStatus(LED_ON);
 
     if (IoTHubDeviceClient_LL_SetOption(iothubClientHandle, OPTION_KEEP_ALIVE,
                                         &keepalivePeriodSeconds) != IOTHUB_CLIENT_OK) {
@@ -1242,12 +1301,14 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
             ModbusFetchConfig_GetFetchItemPtrs(ModbusConfigMgr_GetModbusFetchConfig()));
 
         if (err == NO_ERROR) {
-            gLedState = LED_ON;
+            sphereStatus.isPropertySettingValid = true;
+            ChangeLedStatus(LED_ON);
         } else { // ILLEGAL_PROPERTY
             // do not set ct_error and exitCode,
             // as it won't hang with this error.
             Log_Debug("ERROR: Receive illegal property.\n");
-            gLedState = LED_BLINK;
+            sphereStatus.isPropertySettingValid = false;
+            ChangeLedStatus(LED_BLINK);
             cactusphere_error_notify(err);
         }
         break;
@@ -1289,12 +1350,14 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
         SendPropertyResponse(Send_PropertyItem);
 
         if (err == NO_ERROR) {
-            gLedState = LED_ON;
+            sphereStatus.isPropertySettingValid = true;
+            ChangeLedStatus(LED_ON);
         } else { // ILLEGAL_PROPERTY
             // do not set ct_error and exitCode,
             // as it won't hang with this error.
             Log_Debug("ERROR: Receive illegal property.\n");
-            gLedState = LED_BLINK;
+            sphereStatus.isPropertySettingValid = false;
+            ChangeLedStatus(LED_BLINK);
             cactusphere_error_notify(err);
         }
         break;
@@ -1316,7 +1379,8 @@ static void TwinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned ch
 
     if (ct_error < 0) {
         // hang
-        gLedState = LED_BLINK;
+        sphereStatus.isPropertySettingValid = false;
+        ChangeLedStatus(LED_BLINK);
         cactusphere_error_notify(err);
         exitCode = ExitCode_TermHandler_SigTerm;
     }
