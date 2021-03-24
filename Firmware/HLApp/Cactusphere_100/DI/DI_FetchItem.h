@@ -35,13 +35,14 @@
 
 typedef struct DI_FetchItem {
     char        telemetryName[TELEMETRY_NAME_MAX_LEN + 1];  // telemetry name
-    uint32_t    intervalSec;    // periodic acquisition interval (in seconds)
-    uint32_t    pinID;          // pin ID
-    bool        isPulseCounter; // pulse counter(true) / polling(false)
-    bool        isCountClear;   // whether to clear the counter
-    bool        isPulseHigh;    // whether settlement as pulse when high(:1) or low(:0) level
-    uint32_t    minPulseWidth;  // minimum length for settlement as pulse
-    uint32_t    maxPulseCount;  // max pulse counter value
+    uint32_t    intervalSec;            // periodic acquisition interval (in seconds)
+    uint32_t    pinID;                  // pin ID
+    bool        isPulseCounter;         // pulse counter(true) / polling(false)
+    bool        isCountClear;           // whether to clear the counter
+    bool        isPulseHigh;            // whether settlement as pulse when high(:1) or low(:0) level
+    bool        isPollingActiveHigh;    // whether the value notified by polling is Active High
+    uint32_t    minPulseWidth;          // minimum length for settlement as pulse
+    uint32_t    maxPulseCount;          // max pulse counter value
 } DI_FetchItem;
 
 #endif  // _DI_FETCH_ITEM_H

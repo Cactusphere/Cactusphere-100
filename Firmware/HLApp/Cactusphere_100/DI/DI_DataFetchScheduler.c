@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  */
 
+#include <applibs/gpio.h>
+
 #include "DI_DataFetchScheduler.h"
 
 #include "DI_FetchItem.h"
@@ -40,6 +42,9 @@ typedef struct DI_DataFetchScheduler {
     DI_FetchTargets*    mFetchTargets;  // acquisition targets of pulse conter
     DI_Watcher*         mWatcher;       // contact input watch targets
 } DI_DataFetchScheduler;
+
+#define DI_POLLING_VALUE_OFF  0
+#define DI_POLLING_VALUE_ON   1
 
 //
 // DI_DataFetchScheduler's private procedure/method
@@ -104,6 +109,13 @@ DI_DataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
                 if (! DI_Lib_ReadPinLevel(item->pinID, &currentStatus)) {
                     continue;
                 };
+
+                // In the case of Active-Low, telemetry value is converted.
+                // IsActiveHigh: false(Active-Low) -> GPIO_Value_Low: DI_POLLING_VALUE_ON (1), GPIO_Value_High : DI_POLLING_VALUE_OFF(0)
+                // IsActiveHigh: true(Active-High) -> GPIO_Value_Low: DI_POLLING_VALUE_OFF(0), GPIO_Value_High : DI_POLLING_VALUE_ON (1)
+                if (!item->isPollingActiveHigh) {
+                    currentStatus = (currentStatus == GPIO_Value_Low ? DI_POLLING_VALUE_ON : DI_POLLING_VALUE_OFF);
+                }
                 StringBuf_AppendByPrintf(me->mStringBuf, "%ld", currentStatus);
             }
 

@@ -132,11 +132,11 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
 
 long ModbusDevRTU_CreateInterval(ModbusCtx* me) {
     int data = 8;
-    long interval = 3.5 * 1000000000 * (1 + data
+    long interval_ns = 1000000000LL * (1 + data
                   + (me->parity == PARITY_NONE ? 0 : 1)
-                  + me->stop) / me->baud;
+                  + me->stop) * 3.5 / me->baud;
 
-    return interval;
+    return interval_ns;
 }
 
 // Read register
