@@ -1,22 +1,23 @@
 
 # Azure Sphere Explorer for Cactusphere
 
-Azure Sphereのデバイスやプロダクト、デバイスグループなどをすばやく簡単に見ることができるツールとして、Azure Sphere Explorerがあります。Azure Sphere Explorerの詳細情報は[こちら](https://github.com/matsujirushi/AzureSphereExplorer)を参照してください。
+Azure Sphere Explorer for Cactusphereは、Cactusphere用のデバイス管理ツールです。
+デバイスやプロダクト、デバイスグループなどをすばやく簡単に確認することができます。
 
-アットマークテクノでは、Azure Sphere Explorerをベースにして、以下の機能を追加したAzure Sphere Explorer for Cactusphereの実行ファイルを提供します。
+[Azure Sphere Explorer](https://github.com/matsujirushi/AzureSphereExplorer)をベースに、以下の機能が追加されています。
 
-## 追記機能一覧
+## 追記機能
 
 - デバイスのクレーム (claim) 機能
-- SphereOS/アプリのOTA保留/時間指定実行
+- SphereOS/アプリのOTA保留/時間指定実行機能
 
-## ライセンス
+## ソフトウェアライセンス
 
- - 開発元(Azure Sphere Explorer)のライセンス
-    - [MIT](https://github.com/matsujirushi/AzureSphereExplorer/blob/master/LICENSE.txt)
+ - Azure Sphere Explorer(ベースソフトウェア)
+    - [MIT License](https://github.com/matsujirushi/AzureSphereExplorer/blob/master/LICENSE.txt)
 
- - 本ツール(Azure Sphere Explorer for Cactusphere)のライセンス
-    - [MIT](https://github.com/Cactusphere/Cactusphere-100/blob/master/Tools/AzureSphereExplorerForCactusphere/LICENSE.txt)
+ - Azure Sphere Explorer for Cactusphere(本ツール)
+    - [MIT License](https://github.com/Cactusphere/Cactusphere-100/blob/master/Tools/AzureSphereExplorerForCactusphere/LICENSE.txt)
 
 ## 要件
 
@@ -28,8 +29,8 @@ Azure Sphereのデバイスやプロダクト、デバイスグループなど�
 ## インストール方法
 
 1. [AzureSphereExplorerForCactusphere.zip](https://github.com/Cactusphere/Cactusphere-100/raw/master/Tools/AzureSphereExplorerForCactusphere/AzureSphereExplorerForCactusphere.zip)をダウンロードしてください。
-1. 適当なフォルダに、`AzureSphereExplorerForCactusphere.zip`を解凍してください。
-1. 解凍した中にある、`AzureSphereExplorerForCactusphere.exe`を起動してください。
+1. 任意のフォルダに、`AzureSphereExplorerForCactusphere.zip`を解凍してください。
+1. 解凍されたフォルダ内の、`AzureSphereExplorerForCactusphere.exe`を起動してください。
 
 
 ## 基本機能について

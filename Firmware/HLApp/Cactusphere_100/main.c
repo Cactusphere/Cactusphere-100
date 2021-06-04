@@ -98,7 +98,6 @@ typedef enum {
     ExitCode_Validate_ConnectionType,
     ExitCode_Validate_ScopeId,
     ExitCode_Validate_IotHubHostname,
-    ExitCode_Validate_DeviceId,
 } ExitCode;
 
 static volatile sig_atomic_t exitCode = ExitCode_Success;
@@ -190,7 +189,7 @@ SphereStatus sphereStatus = {false,false,IoTHubClientAuthenticationState_NotAuth
 // Azure IoT definitions.
 static char *scopeId = NULL;                                      // ScopeId for DPS.
 static char *hubHostName = NULL;                                  // Azure IoT Hub Hostname.
-static char *deviceId = NULL;                                     // Device ID must be in lowercase.
+static bool isConnectionTypeInCmdArgs = false;
 static ConnectionType connectionType = ConnectionType_NotDefined; // Type of connection to use.
 
 static IOTHUB_DEVICE_CLIENT_LL_HANDLE iothubClientHandle = NULL;
@@ -280,9 +279,8 @@ DeferredUpdateConfig fwUpdate = {0};
 static bool updateDeferring = false;
 // Usage text for command line arguments in application manifest.
 static const char *cmdLineArgsUsageText =
-    "DPS connection type: \" CmdArgs \": [\"--ConnectionType DPS\", \"--ScopeID <scope_id>\"]\n"
-    "Direction connection type: \" CmdArgs \": [\" --ConnectionType Direct\", "
-    "\"--Hostname <azureiothub_hostname>\", \"--DeviceID <device_id>\"]\n";
+    "DPS connection type: \"CmdArgs\": [\"--ScopeID\", \"<scope_id>\"]\n"
+    "Direction connection type: \"CmdArgs\": [\"--Hostname\", \"<azureiothub_hostname>\"]\n";
 
 /// <summary>
 ///     Signal handler for termination requests. This handler must be async-signal-safe.
@@ -522,7 +520,6 @@ static void ParseCommandLineArguments(int argc, char *argv[])
     static const struct option cmdLineOptions[] = {{"ConnectionType", required_argument, NULL, 'c'},
                                                    {"ScopeID", required_argument, NULL, 's'},
                                                    {"Hostname", required_argument, NULL, 'h'},
-                                                   {"DeviceID", required_argument, NULL, 'd'},
                                                    {NULL, 0, NULL, 0}};
 
     if (argc == 2) {
@@ -540,6 +537,7 @@ static void ParseCommandLineArguments(int argc, char *argv[])
             switch (option) {
             case 'c':
                 Log_Debug("ConnectionType: %s\n", optarg);
+                isConnectionTypeInCmdArgs = true;
                 if (strcmp(optarg, "DPS") == 0) {
                     connectionType = ConnectionType_DPS;
                 } else if (strcmp(optarg, "Direct") == 0) {
@@ -549,14 +547,12 @@ static void ParseCommandLineArguments(int argc, char *argv[])
             case 's':
                 Log_Debug("ScopeID: %s\n", optarg);
                 scopeId = optarg;
+                connectionType = isConnectionTypeInCmdArgs ? connectionType : ConnectionType_DPS;
                 break;
             case 'h':
                 Log_Debug("Hostname: %s\n", optarg);
                 hubHostName = optarg;
-                break;
-            case 'd':
-                Log_Debug("DeviceID: %s\n", optarg);
-                deviceId = optarg;
+                connectionType = isConnectionTypeInCmdArgs ? connectionType : ConnectionType_Direct;
                 break;
             default:
                 // Unknown options are ignored.
@@ -578,6 +574,10 @@ static ExitCode ValidateUserConfiguration(void)
     if (connectionType < ConnectionType_DPS || connectionType > ConnectionType_Direct) {
         validationExitCode = ExitCode_Validate_ConnectionType;
     }
+    
+    if (!isConnectionTypeInCmdArgs && scopeId != NULL && hubHostName != NULL){
+        connectionType = ConnectionType_DPS;
+    }
 
     if (connectionType == ConnectionType_DPS) {
         if (scopeId == NULL) {
@@ -590,18 +590,6 @@ static ExitCode ValidateUserConfiguration(void)
     if (connectionType == ConnectionType_Direct) {
         if (hubHostName == NULL) {
             validationExitCode = ExitCode_Validate_IotHubHostname;
-        } else if (deviceId == NULL) {
-            validationExitCode = ExitCode_Validate_DeviceId;
-        }
-        if (deviceId != NULL) {
-            // Validate that device ID is in lowercase.
-            size_t len = strlen(deviceId);
-            for (size_t i = 0; i < len; i++) {
-                if (isupper(deviceId[i])) {
-                    Log_Debug("Device ID must be in lowercase.\n");
-                    return ExitCode_Validate_DeviceId;
-                }
-            }
         }
         if (validationExitCode == ExitCode_Success) {
             Log_Debug("Using Direct Connection: Azure IoT Hub Hostname %s\n", hubHostName);
@@ -1091,7 +1079,7 @@ static bool SetupAzureIoTHubClientWithDaa(void)
 
     // Create Azure Iot Hub client handle
     iothubClientHandle =
-        IoTHubDeviceClient_LL_CreateFromDeviceAuth(hubHostName, deviceId, MQTT_Protocol);
+        IoTHubDeviceClient_LL_CreateWithAzureSphereFromDeviceAuth(hubHostName, MQTT_Protocol);
 
     if (iothubClientHandle == NULL) {
         Log_Debug("IoTHubDeviceClient_LL_CreateFromDeviceAuth returned NULL.\n");
