@@ -397,10 +397,6 @@ int main(int argc, char *argv[])
         Log_Debug("Error setting hardware address (eth0) %d\n", errno);
     }
 
-    err = Networking_SetInterfaceState("eth0", true);
-    if (err < 0) {
-        Log_Debug("Error setting interface state (eth0) %d\n", errno);
-    }
     ParseCommandLineArguments(argc, argv);
 
     exitCode = ValidateUserConfiguration();
