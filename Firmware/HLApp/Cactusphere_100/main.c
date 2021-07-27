@@ -104,6 +104,7 @@ typedef enum {
     ExitCode_NW_InitInterfaceList_Failed = 29,
     ExitCode_NW_GetInterfaceCount_Failed = 30,
     ExitCode_NW_GetInterfaces_Failed = 31,
+    ExitCode_NW_IsNetworkingReady_Failed = 32,
 } ExitCode;
 
 static volatile sig_atomic_t exitCode = ExitCode_Success;
@@ -229,8 +230,6 @@ const struct itimerspec watchdogInterval = { { 300, 0 },{ 300, 0 } };
 timer_t watchdogTimer;
 
 // Network Interface
-Networking_NetworkInterface *networkInterfacesList = NULL;
-ssize_t actualNetworkInterfaceCount = 0;
 static ExitCode InitNetworkInterfaces(void);
 
 // Status LED
@@ -367,6 +366,9 @@ static bool ChangeLedStatus(LED_Status led_status)
 /// ExitCode value which indicates the specific failure.</returns>
 static ExitCode InitNetworkInterfaces(void)
 {
+    Networking_NetworkInterface *networkInterfacesList = NULL;
+    ssize_t actualNetworkInterfaceCount = 0;
+
     ssize_t count = Networking_GetInterfaceCount();
     if (count == -1) {
         Log_Debug("ERROR: Networking_GetInterfaceCount: errno=%d (%s)\n", errno, strerror(errno));
@@ -400,6 +402,8 @@ static ExitCode InitNetworkInterfaces(void)
             }
         }
     }
+
+    free(networkInterfacesList);
 
     return ExitCode_Success;
 }
@@ -481,8 +485,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    free(networkInterfacesList);
-
     SendRTApp_CloseHandlers();
 
     while(ct_error < 0) {
@@ -510,29 +512,25 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
         return;
     }
 
-    // Check whether the device is connected to the internet.
-    for (ssize_t i = 0; i < actualNetworkInterfaceCount; ++i) {
-        Networking_InterfaceConnectionStatus status;
-        int result = Networking_GetInterfaceConnectionStatus(networkInterfacesList[i].interfaceName, &status);
-        if (result == 0 && (status & Networking_InterfaceConnectionStatus_ConnectedToInternet)) {
+    // Check whether the network is up.
+    bool isNetworkReady = false;
+    if (Networking_IsNetworkingReady(&isNetworkReady) != -1) {
+        if (isNetworkReady) {
             if (sphereStatus.IoTHubClientAuthState == IoTHubClientAuthenticationState_NotAuthenticated) {
                 SetupAzureClient();
                 IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
             }
             sphereStatus.isNetworkConnected = true;
             ChangeLedStatus(LED_ON);
-            break;
-        }
-        else {
+        } else {
             sphereStatus.isNetworkConnected = false;
             ChangeLedStatus(LED_BLINK);
-            if (errno != EAGAIN) {
-                Log_Debug("ERROR: Networking_GetInterfaceConnectionStatus: %d (%s)\n", errno,
-                    strerror(errno));
-                exitCode = ExitCode_NW_GetInterfaceConnectionStatus_Failed;
-                return;
-            }
         }
+    } else {
+        Log_Debug("ERROR: Networking_IsNetworkingReady: %d (%s)\n", errno,
+                  strerror(errno));
+        exitCode = ExitCode_NW_IsNetworkingReady_Failed;
+        return;
     }
 
     if (ct_error < 0) {
