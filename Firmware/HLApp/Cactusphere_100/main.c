@@ -83,21 +83,28 @@ typedef enum {
 
     ExitCode_SetUpSysEvent_EventLoop = 10,
 
-    ExitCode_InterfaceConnectionStatus_Failed = 16,
+    /* ExitCode 11-16 no longer used */
 
-    ExitCode_SetUpSysEvent_RegisterEvent,
+    ExitCode_SetUpSysEvent_RegisterEvent = 17,
 
-    ExitCode_UpdateCallback_UnexpectedEvent,
-    ExitCode_UpdateCallback_GetUpdateEvent,
-    ExitCode_UpdateCallback_DeferEvent,
-    ExitCode_UpdateCallback_FinalUpdate,
-    ExitCode_UpdateCallback_UnexpectedStatus,
+    ExitCode_UpdateCallback_UnexpectedEvent = 18,
+    ExitCode_UpdateCallback_GetUpdateEvent = 19,
+    ExitCode_UpdateCallback_DeferEvent = 20,
+    ExitCode_UpdateCallback_FinalUpdate = 21,
+    ExitCode_UpdateCallback_UnexpectedStatus = 22,
 
-    ExitCode_Main_SetEnv,
+    ExitCode_Main_SetEnv = 23,
 
-    ExitCode_Validate_ConnectionType,
-    ExitCode_Validate_ScopeId,
-    ExitCode_Validate_IotHubHostname,
+    ExitCode_Validate_ConnectionType = 24,
+    ExitCode_Validate_ScopeId = 25,
+    ExitCode_Validate_IotHubHostname = 26,
+
+    ExitCode_NW_GetInterfaceConnectionStatus_Failed = 27,
+    ExitCode_NW_SetHWAddress_Failed = 28,
+    ExitCode_NW_InitInterfaceList_Failed = 29,
+    ExitCode_NW_GetInterfaceCount_Failed = 30,
+    ExitCode_NW_GetInterfaces_Failed = 31,
+    ExitCode_NW_IsNetworkingReady_Failed = 32,
 } ExitCode;
 
 static volatile sig_atomic_t exitCode = ExitCode_Success;
@@ -183,7 +190,6 @@ typedef struct {
     bool isNetworkConnected;
     bool isPropertySettingValid;
 } SphereStatus;
-
 SphereStatus sphereStatus = {false,false,IoTHubClientAuthenticationState_NotAuthenticated,false,false};
 
 // Azure IoT definitions.
@@ -197,8 +203,6 @@ static const int keepalivePeriodSeconds = 20;
 static bool iothubFirstConnected = false;
 static const int deviceIdForDaaCertUsage = 1; // A constant used to direct the IoT SDK to use
                                               // the DAA cert under the hood.
-static const char wlan_networkInterface[] = "wlan0";
-static const char eth_networkInterface[] = "eth0";
 
 // Application update events are received via an event loop.
 static EventRegistration *updateEventReg = NULL;
@@ -224,6 +228,9 @@ static void ClosePeripheralsAndHandlers(void);
 // Software Watchdog
 const struct itimerspec watchdogInterval = { { 300, 0 },{ 300, 0 } };
 timer_t watchdogTimer;
+
+// Network Interface
+static ExitCode InitNetworkInterfaces(void);
 
 // Status LED
 typedef enum {
@@ -353,6 +360,55 @@ static bool ChangeLedStatus(LED_Status led_status)
 }
 
 /// <summary>
+/// Set up the network interface and get information.
+/// </summary>
+/// <returns>ExitCode_Success if all succeeds; otherwise another
+/// ExitCode value which indicates the specific failure.</returns>
+static ExitCode InitNetworkInterfaces(void)
+{
+    Networking_NetworkInterface *networkInterfacesList = NULL;
+    ssize_t actualNetworkInterfaceCount = 0;
+
+    ssize_t count = Networking_GetInterfaceCount();
+    if (count == -1) {
+        Log_Debug("ERROR: Networking_GetInterfaceCount: errno=%d (%s)\n", errno, strerror(errno));
+        return ExitCode_NW_GetInterfaceCount_Failed;
+    }
+
+    // Read current status of all interfaces.
+    size_t bytesRequired = ((size_t)count) * sizeof(Networking_NetworkInterface);
+    networkInterfacesList = malloc(bytesRequired);
+    if (!networkInterfacesList) {
+        Log_Debug("ERROR: Network Interface List malloc\n");
+        return ExitCode_NW_InitInterfaceList_Failed;
+    }
+    actualNetworkInterfaceCount = Networking_GetInterfaces(networkInterfacesList, (size_t)count);
+    if (actualNetworkInterfaceCount == -1) {
+        Log_Debug("ERROR: Networking_GetInterfaces: errno=%d (%s)\n", errno, strerror(errno));
+        return ExitCode_NW_GetInterfaces_Failed;
+    }
+    Log_Debug("INFO: NetworkInterfaceCount=%zd\n", actualNetworkInterfaceCount);
+
+    // Set Ethernet hardware address.
+    for (ssize_t i = 0; i < actualNetworkInterfaceCount; ++i) {
+        if (strncmp(networkInterfacesList[i].interfaceName, "eth0", 4) == 0) {
+            static Networking_Interface_HardwareAddress ha;
+            for (int i = 0; i < HARDWARE_ADDRESS_LENGTH; i++) {
+                ha.address[i] = eeprom.ethernetMac[HARDWARE_ADDRESS_LENGTH - (i + 1)];
+            }
+            if (Networking_SetHardwareAddress("eth0", ha.address, HARDWARE_ADDRESS_LENGTH) < 0) {
+                Log_Debug("ERROR: setting hardware address (eth0) %d\n", errno);
+                return ExitCode_NW_SetHWAddress_Failed;
+            }
+        }
+    }
+
+    free(networkInterfacesList);
+
+    return ExitCode_Success;
+}
+
+/// <summary>
 ///     Main entry point for this sample.
 /// </summary>
 int main(int argc, char *argv[])
@@ -387,22 +443,12 @@ int main(int argc, char *argv[])
         sphereStatus.isEepromReadSuccess = true;
     }
 
-    static Networking_Interface_HardwareAddress ha;
-
-    for (int i = 0; i < HARDWARE_ADDRESS_LENGTH; i++) {
-        ha.address[i] = eeprom.ethernetMac[HARDWARE_ADDRESS_LENGTH - (i + 1)];
-    }
-    err = Networking_SetHardwareAddress("eth0", ha.address, HARDWARE_ADDRESS_LENGTH);
-    if (err < 0) {
-        Log_Debug("Error setting hardware address (eth0) %d\n", errno);
+    exitCode = InitNetworkInterfaces();
+    if (exitCode != ExitCode_Success) {
+        return exitCode;
     }
 
-    err = Networking_SetInterfaceState("eth0", true);
-    if (err < 0) {
-        Log_Debug("Error setting interface state (eth0) %d\n", errno);
-    }
     ParseCommandLineArguments(argc, argv);
-
     exitCode = ValidateUserConfiguration();
     if (exitCode != ExitCode_Success) {
         return exitCode;
@@ -466,32 +512,26 @@ static void AzureTimerEventHandler(EventLoopTimer *timer)
         return;
     }
 
-    // Check whether the device is connected to the internet.
-    Networking_InterfaceConnectionStatus eth_status;
-    Networking_InterfaceConnectionStatus wlan_status;
-    int ret_eth_status = Networking_GetInterfaceConnectionStatus(eth_networkInterface, &eth_status);
-    int ret_wlan_status = Networking_GetInterfaceConnectionStatus(wlan_networkInterface, &wlan_status);
-
-    if ((ret_eth_status == 0 && (eth_status & Networking_InterfaceConnectionStatus_ConnectedToInternet)) ||
-        (ret_wlan_status == 0 && (wlan_status & Networking_InterfaceConnectionStatus_ConnectedToInternet))) {
-        if (sphereStatus.IoTHubClientAuthState == IoTHubClientAuthenticationState_NotAuthenticated) {
-            SetupAzureClient();
-            IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
+    // Check whether the network is up.
+    bool isNetworkReady = false;
+    if (Networking_IsNetworkingReady(&isNetworkReady) != -1) {
+        if (isNetworkReady) {
+            if (sphereStatus.IoTHubClientAuthState == IoTHubClientAuthenticationState_NotAuthenticated) {
+                SetupAzureClient();
+                IoT_CentralLib_Initialize(CACHE_BUF_SIZE, false);
+            }
+            sphereStatus.isNetworkConnected = true;
+            ChangeLedStatus(LED_ON);
+        } else {
+            sphereStatus.isNetworkConnected = false;
+            ChangeLedStatus(LED_BLINK);
         }
-        sphereStatus.isNetworkConnected = true;
-        ChangeLedStatus(LED_ON);
+    } else {
+        Log_Debug("ERROR: Networking_IsNetworkingReady: %d (%s)\n", errno,
+                  strerror(errno));
+        exitCode = ExitCode_NW_IsNetworkingReady_Failed;
+        return;
     }
-    else {
-        sphereStatus.isNetworkConnected = false;
-        ChangeLedStatus(LED_BLINK);
-        if (errno != EAGAIN) {
-            Log_Debug("ERROR: Networking_GetInterfaceConnectionStatus: %d (%s)\n", errno,
-                strerror(errno));
-            exitCode = ExitCode_InterfaceConnectionStatus_Failed;
-            return;
-        }
-    }
-
 
     if (ct_error < 0) {
         goto dowork;
