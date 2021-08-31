@@ -22,7 +22,7 @@ Azure Sphere Explorer for Cactusphereは、Cactusphere用のデバイス管理�
 
 ## 更新履歴
 
- - [詳細](https://github.com/Cactusphere/Cactusphere-100/blob/master/Tools/AzureSphereExplorerForCactusphere/UPDATE_HISTORY.md)
+ - [詳細](UPDATE_HISTORY.md)
 
 ## 要件
 
