@@ -10,6 +10,7 @@ Azure Sphere Explorer for Cactusphereは、Cactusphere用のデバイス管理�
 
 - デバイスのクレーム (claim) 機能
 - SphereOS/アプリのOTA保留/時間指定実行機能
+- デバイスピックアップ機能
 
 ## ソフトウェアライセンス
 
@@ -18,6 +19,10 @@ Azure Sphere Explorer for Cactusphereは、Cactusphere用のデバイス管理�
 
  - Azure Sphere Explorer for Cactusphere(本ツール)
     - [MIT License](https://github.com/Cactusphere/Cactusphere-100/blob/master/Tools/AzureSphereExplorerForCactusphere/LICENSE.txt)
+
+## 更新履歴
+
+ - [詳細](UPDATE_HISTORY.md)
 
 ## 要件
 
@@ -34,6 +39,12 @@ Azure Sphere Explorer for Cactusphereは、Cactusphere用のデバイス管理�
 
 
 ## 基本機能について
+
+### サインイン
+
+`AzureSphereExplorerForCactusphere.exe`を起動すると、サインインウインドウが表示されます。Azure Sphere 用のアカウントでサインインしてください。サインインに成功すると紐づけられているテナント名が上部の`Azure Sphere Explorer For Cactusphere-`に続いて表示されます。紐づけられているテナントが複数ある場合は表示したいテナントを選択するウィンドウが表示されますので、テナントを選択してください。
+
+### メインウインドウ
 
 Azure Sphere Explorer for Cactusphereには3つのペイン(表示領域)があります。左ペインにProductとDevice Groupsの一覧が表示され、右ペインにはDevice一覧が表示されます。各項目の上で右クリックをすることで、項目の作成や削除、デプロイ設定、デバイスグループの変更などを行う事ができます。
 
@@ -249,3 +260,11 @@ Azure Sphere Explorer for Cactusphereの"Devices"ペイン内のデバイスID�
 "OK"と表記されたウィンドウが表示された場合、アップデート保留機能の設定に成功しています。
 
 これで、アップデート保留機能の設定は完了です。
+
+### デバイスピックアップ機能
+
+"Devices"ペイン上部にある"Input the ID"フォームにデバイスIDを入力すると、一致するデバイスのみ一覧に表示されます。
+
+<a href="../../Images/AzureSphereExplorer_PickupDevice_001.png"><img src="../../Images/AzureSphereExplorer_PickupDevice_001.png" width=100% style="display: block; margin: auto;"></a>
+
+一致するデバイスが一つもない場合は、一覧は更新されません。
