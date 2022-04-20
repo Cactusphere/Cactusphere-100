@@ -88,6 +88,14 @@ ModbusRTU_AddCRCRequestMsg(uint8_t* req, int req_length) {
     return req_length;
 }
 
+static bool
+ModbusRTU_CheckCRCResponseMsg(uint8_t* rsp, int rsp_length) {
+    uint16_t crc = ModbusRTU_CalcCRC(rsp, rsp_length);
+
+    return (rsp[rsp_length] == (uint8_t)(crc & 0x00ff)) &&
+           (rsp[rsp_length + 1] == (uint8_t)(crc >> 8));
+}
+
 static int
 ModbusRTU_CreateRequestMsg(ModbusCtx* me, int function, int addr, int length, uint8_t *req) {
     req[0] = (uint8_t)me->devId;
@@ -107,6 +115,7 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     const int function = rsp[offset];
     int req_calc_length = 0;
     int rsp_calc_length = 0;
+    int crc_calc_length = 0;
 
     if (req[0] != rsp[0]) {
         return -1;
@@ -121,14 +130,23 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     case FC_READ_INPUT_REGISTERS:
         req_calc_length = (req[offset + 3] << 8) + req[offset + 4];
         rsp_calc_length = (rsp[offset + 1] / 2);
+        crc_calc_length = MODBUS_RTU_PRESET_READ_RES_LENGTH + (rsp_calc_length * 2);
         break;
-    default:
+    case FC_WRITE_FORCE_SINGLE_COIL:
+    case FC_WRITE_SINGLE_REGISTER:
         req_calc_length = rsp_calc_length = 1;
+        crc_calc_length = MODBUS_RTU_PRESET_WRITE_RES_LENGTH + (rsp_calc_length * 2);
         break;
+    default :
+        return -1;
     }
 
     if (req_calc_length == rsp_calc_length) {
         rc = rsp_calc_length;
+    }
+
+    if (!(ModbusRTU_CheckCRCResponseMsg(rsp, crc_calc_length))) {
+        return -1;
     }
 
     return rc;
