@@ -106,7 +106,13 @@ ModbusDataFetchScheduler_DoSchedule(DataFetchSchedulerBase* me)
 
                 unsigned long tmpVal  = 0;
                 if (item->regCount == 2) {
-                    tmpVal = (unsigned long)((readVal[0] << 16) + readVal[1]);
+                    if (item->asLittle) {
+                        // Little endian
+                        tmpVal = (unsigned long)((readVal[1] << 16) + readVal[0]);
+                    } else {
+                        // Big endian
+                        tmpVal = (unsigned long)((readVal[0] << 16) + readVal[1]);
+                    }
                 } else {
                     tmpVal = readVal[0];
                 }
