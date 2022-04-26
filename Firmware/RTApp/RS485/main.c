@@ -54,8 +54,8 @@ typedef unsigned int u32;
 #define UART_DLL				(0x0)
 #define UART_DLH				(0x4)
 #define UART_RATE_STEP			(0x24)
-#define UART_STEP_COUNT			(0x28)
-#define UART_SAMPLE_COUNT		(0x2c)
+#define UART_SAMPLE_COUNT		(0x28)
+#define UART_SAMPLE_POINT		(0x2c)
 #define UART_FRACDIV_L			(0x54)
 #define UART_FRACDIV_M			(0x58)
 #define UART_LCR_DLAB			(1 << 7)
@@ -141,9 +141,9 @@ void mtk_hdl_uart_set_params(u32 baudrate, u8 parity, u8 stop)
 
     WriteReg32(UART_BASE, UART_DLL, (high_speed_div & 0x00ff));
     WriteReg32(UART_BASE, UART_DLH, (high_speed_div >> 8) & 0x00ff);
-    WriteReg32(UART_BASE, UART_STEP_COUNT, sample_count);
-    WriteReg32(UART_BASE, UART_FRACDIV_M, sample_point);
-    WriteReg32(UART_BASE, UART_SAMPLE_COUNT, fraction_M_mapping[fraction]);
+    WriteReg32(UART_BASE, UART_SAMPLE_COUNT, sample_count);
+    WriteReg32(UART_BASE, UART_SAMPLE_POINT, sample_point);
+    WriteReg32(UART_BASE, UART_FRACDIV_M, fraction_M_mapping[fraction]);
     WriteReg32(UART_BASE, UART_FRACDIV_L, fraction_L_mapping[fraction]);
 
     /* DLAB end */
