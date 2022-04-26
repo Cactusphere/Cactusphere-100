@@ -26,7 +26,7 @@ PROJECT(RS485_RTApp C)
 azsphere_configure_tools(TOOLS_REVISION "22.02")
 
 # App Version
-add_compile_definitions(RTAPP_VERSION="22.02-v1.0.0")
+add_compile_definitions(RTAPP_VERSION="22.02-v1.0.1")
 
 # Create executable
 ADD_EXECUTABLE(${PROJECT_NAME} main.c TimerUtil.c InterCoreComm.c mt3620-intercore.c mt3620-gpio.c mt3620-timer.c)
