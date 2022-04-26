@@ -66,7 +66,7 @@ typedef unsigned int u32;
 #define UART_LCR_STB_SHIFT		(2)
 #define UART_LCR_WLS_SHIFT		(0)
 
-#define RX_BUFFER_SIZE 8
+#define RX_BUFFER_SIZE 10
 
 extern uint32_t StackTop; // &StackTop == end of TCM
 
