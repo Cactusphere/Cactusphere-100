@@ -39,7 +39,8 @@ typedef struct ModbusFetchItem {
     uint16_t    offset;         // sum value
     uint32_t    multiplier;     // multiply value
     uint32_t    devider;        // divide value
-    bool        asFloat;        // true:float, false: not float 
+    bool        asFloat;        // true:float, false: not float
+    bool        asLittle;       // true:little endian, false:big endian
 } ModbusFetchItem;
 
 #endif  // _MODBUS_FETCH_ITEM_H_

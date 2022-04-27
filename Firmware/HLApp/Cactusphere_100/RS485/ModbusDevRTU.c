@@ -44,7 +44,11 @@
 #define MIN_REQ_LENGTH 12
 #define MAX_MESSAGE_LENGTH 256
 
-#define MODBUS_RTU_PRESET_REQ_LENGTH 6
+#define MODBUS_RTU_PRESET_READ_REQ_LENGTH 6
+#define MODBUS_RTU_PRESET_READ_RES_LENGTH 3
+#define MODBUS_RTU_PRESET_WRITE_REQ_LENGTH 4
+#define MODBUS_RTU_DATA_WRITE_REQ_LENGTH 2
+#define MODBUS_RTU_PRESET_WRITE_RES_LENGTH 4
 
 // ModbusCtx structure
 typedef struct ModbusCtx {
@@ -84,6 +88,14 @@ ModbusRTU_AddCRCRequestMsg(uint8_t* req, int req_length) {
     return req_length;
 }
 
+static bool
+ModbusRTU_CheckCRCResponseMsg(uint8_t* rsp, int rsp_length) {
+    uint16_t crc = ModbusRTU_CalcCRC(rsp, rsp_length);
+
+    return (rsp[rsp_length] == (uint8_t)(crc & 0x00ff)) &&
+           (rsp[rsp_length + 1] == (uint8_t)(crc >> 8));
+}
+
 static int
 ModbusRTU_CreateRequestMsg(ModbusCtx* me, int function, int addr, int length, uint8_t *req) {
     req[0] = (uint8_t)me->devId;
@@ -93,7 +105,7 @@ ModbusRTU_CreateRequestMsg(ModbusCtx* me, int function, int addr, int length, ui
     req[4] = (uint8_t)(length >> 8);
     req[5] = (uint8_t)(length & 0x00ff);
 
-    return ModbusRTU_AddCRCRequestMsg(req, MODBUS_RTU_PRESET_REQ_LENGTH);
+    return ModbusRTU_AddCRCRequestMsg(req, MODBUS_RTU_PRESET_READ_REQ_LENGTH);
 }
 
 static int 
@@ -103,6 +115,7 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     const int function = rsp[offset];
     int req_calc_length = 0;
     int rsp_calc_length = 0;
+    int crc_calc_length = 0;
 
     if (req[0] != rsp[0]) {
         return -1;
@@ -117,14 +130,23 @@ ModbusRTU_CheckResponseMsg(ModbusCtx* me, uint8_t* req, uint8_t* rsp){
     case FC_READ_INPUT_REGISTERS:
         req_calc_length = (req[offset + 3] << 8) + req[offset + 4];
         rsp_calc_length = (rsp[offset + 1] / 2);
+        crc_calc_length = MODBUS_RTU_PRESET_READ_RES_LENGTH + (rsp_calc_length * 2);
         break;
-    default:
+    case FC_WRITE_FORCE_SINGLE_COIL:
+    case FC_WRITE_SINGLE_REGISTER:
         req_calc_length = rsp_calc_length = 1;
+        crc_calc_length = MODBUS_RTU_PRESET_WRITE_RES_LENGTH + (rsp_calc_length * 2);
         break;
+    default :
+        return -1;
     }
 
     if (req_calc_length == rsp_calc_length) {
         rc = rsp_calc_length;
+    }
+
+    if (!(ModbusRTU_CheckCRCResponseMsg(rsp, crc_calc_length))) {
+        return -1;
     }
 
     return rc;
@@ -144,8 +166,8 @@ bool
 ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned short* dst, int length) {
     int rc;
     int req_length;
-    uint8_t req[MIN_REQ_LENGTH];
-    uint8_t rsp[MAX_MESSAGE_LENGTH];
+    uint8_t req[MIN_REQ_LENGTH] = {0};
+    uint8_t rsp[MAX_MESSAGE_LENGTH] = {0};
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
 
@@ -155,7 +177,7 @@ ModbusDevRTU_ReadRegister(ModbusCtx* me, int regAddr, int function, unsigned sho
 
     memcpy(msg->body.writeAndReadReq.writeData, req, (size_t)req_length);
     msg->body.writeAndReadReq.writeLen = (uint16_t)req_length;
-    msg->body.writeAndReadReq.readLen = 7;
+    msg->body.writeAndReadReq.readLen = MODBUS_RTU_PRESET_READ_RES_LENGTH + (length * 2) + MODBUS_RTU_CHECKSUM_LENGTH;
 
     msg->header.messageLen = sizeof(msg->body.writeAndReadReq.writeLen)
         + sizeof(msg->body.writeAndReadReq.readLen)
@@ -238,8 +260,8 @@ bool
 ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned short value) {
     int rc;
     int req_length;
-    uint8_t req[MIN_REQ_LENGTH];
-    uint8_t rsp[MAX_MESSAGE_LENGTH];
+    uint8_t req[MIN_REQ_LENGTH] = {0};
+    uint8_t rsp[MAX_MESSAGE_LENGTH] = {0};
     unsigned char sendMessage[MAX_MESSAGE_LENGTH];
     UART_DriverMsg* msg = (UART_DriverMsg*)sendMessage;
 
@@ -249,7 +271,7 @@ ModbusDevRTU_WriteRegister(ModbusCtx* me, int regAddr, int funcCode, unsigned sh
 
     memcpy(msg->body.writeAndReadReq.writeData, req, (size_t)req_length);
     msg->body.writeAndReadReq.writeLen = (uint16_t)req_length;
-    msg->body.writeAndReadReq.readLen = 8;
+    msg->body.writeAndReadReq.readLen = MODBUS_RTU_PRESET_WRITE_REQ_LENGTH + MODBUS_RTU_DATA_WRITE_REQ_LENGTH + MODBUS_RTU_CHECKSUM_LENGTH;
     msg->header.messageLen = sizeof(msg->body.writeAndReadReq.writeLen)
         + sizeof(msg->body.writeAndReadReq.readLen)
         + msg->body.writeAndReadReq.writeLen;

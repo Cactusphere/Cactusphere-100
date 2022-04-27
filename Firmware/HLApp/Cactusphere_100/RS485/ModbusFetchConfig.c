@@ -49,6 +49,7 @@ const char IntervalKey[]                = "interval";
 const char MultiplylKey[]               = "multiply";
 const char DeviderKey[]                 = "devider";
 const char AsFloatKey[]                 = "asFloat";
+const char AsLittleKey[]                = "asLittle";
 
 #define SET_TELEMETRYCONF_DEVID    0x01
 #define SET_TELEMETRYCONF_REGADDR  0x02
@@ -146,6 +147,7 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
         pseudo.multiplier = 0;
         pseudo.devider = 0;
         pseudo.asFloat = false;
+        pseudo.asLittle = false;
 
         for (unsigned int p = 0, q = configItem->u.object.length; p < q; ++p) {
             if (0 == strcmp(configItem->u.object.values[p].name, DevIDKey)) {
@@ -212,6 +214,9 @@ ModbusFetchConfig_LoadFromJSON(ModbusFetchConfig* me,
             } else if (0 == strcmp(configItem->u.object.values[p].name, AsFloatKey)) {
                 json_value* item = configItem->u.object.values[p].value;
                 pseudo.asFloat = item->u.boolean;
+            } else if (0 == strcmp(configItem->u.object.values[p].name, AsLittleKey)) {
+                json_value* item = configItem->u.object.values[p].value;
+                pseudo.asLittle = item->u.boolean;
             }
         }
         
