@@ -23,8 +23,8 @@
 cmake_minimum_required(VERSION 3.10)
 PROJECT(DIInitialFirmware C)
 
-azsphere_configure_tools(TOOLS_REVISION "22.07")
-azsphere_configure_api(TARGET_API_SET "13")
+azsphere_configure_tools(TOOLS_REVISION "22.09")
+azsphere_configure_api(TARGET_API_SET "14")
 
 file(GLOB DRIVERS_SRC drivers/*.c)
 file(GLOB COMMON_SRC common/*.c)
@@ -37,7 +37,7 @@ set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}
 INCLUDE_DIRECTORIES("${INCLUDE_DIR}")
 
 # App Version
-add_compile_definitions(APP_VERSION="22.07-v1.0.0")
+add_compile_definitions(APP_VERSION="22.09-v1.0.0")
 
 set(SRC_LIST main.c ${DRIVERS_SRC} ${COMMON_SRC})
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRC_LIST})
